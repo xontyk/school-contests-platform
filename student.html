@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Личный кабинет ученика</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <div class="navbar__brand"><svg class="icon"><use href="#icon-trophy"></use></svg>Школьные конкурсы</div>
+      <div class="navbar__links">
+        <a href="#" data-tab-link="progress" class="active">Мой прогресс</a>
+        <a href="#" data-tab-link="contests">Афиша конкурсов</a>
+        <a href="#" data-tab-link="participations">Мои участия</a>
+      </div>
+      <div id="navbar-user"></div>
+    </div>
+  </nav>
+
+  <main class="container">
+
+    <section class="section tab-panel active" id="tab-progress">
+      <h2 class="section__title">Мой прогресс</h2>
+
+      <div class="trophy-shelf">
+        <div class="trophy-shelf__rail" id="trophy-shelf-rail"></div>
+        <div class="trophy-shelf__footer">
+          <div class="level-badge" id="level-badge">Уровень 1</div>
+          <div class="trophy-shelf__progress">
+            <div class="progress-bar-track"><div class="progress-bar-fill" id="progress-bar-fill" style="width:0%"></div></div>
+            <div class="trophy-shelf__next" id="next-level-label">до след. уровня: —</div>
+          </div>
+          <div class="points-plaque">
+            <span class="points-plaque__label">Баллы</span>
+            <span class="points-plaque__value" id="points-label">0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-plaques">
+        <div class="stat-plaque"><strong id="stat-contests">0</strong><span>Конкурсов</span></div>
+        <div class="stat-plaque"><strong id="stat-wins">0</strong><span>Побед</span></div>
+        <div class="stat-plaque"><strong id="stat-diplomas">0</strong><span>Дипломов</span></div>
+      </div>
+    </section>
+
+    <section class="section tab-panel" id="tab-contests">
+      <h2 class="section__title">Афиша конкурсов</h2>
+      <p class="section__subtitle">Выберите конкурс и подайте заявку на участие.</p>
+      <div class="grid" id="contests-grid"></div>
+    </section>
+
+    <section class="section tab-panel" id="tab-participations">
+      <h2 class="section__title">Мои участия</h2>
+      <p class="section__subtitle">Статус, баллы и дипломы по каждому конкурсу.</p>
+      <div class="table-wrap card">
+        <table class="data-table" id="participations-table">
+          <thead>
+            <tr>
+              <th>Конкурс</th>
+              <th>Статус</th>
+              <th>Баллы</th>
+              <th>Место</th>
+              <th>Диплом</th>
+            </tr>
+          </thead>
+          <tbody id="participations-tbody"></tbody>
+        </table>
+        <div class="empty-state" id="participations-empty" style="display:none;">Вы пока не участвуете ни в одном конкурсе — загляните в афишу.</div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="js/db.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/diploma.js"></script>
+  <script src="js/student.js"></script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+login,firstName,lastName,className,points,status
+olga,Ольга,Виноградова,9В,65,in_progress
+sergey,Сергей,Фомин,10В,0,registered
+petr,Пётр,Иванов,9А,95,winner

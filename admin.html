@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Админ-панель — Школьные конкурсы</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <div class="navbar__brand"><svg class="icon"><use href="#icon-ledger"></use></svg>Админ-панель</div>
+      <div class="navbar__links"></div>
+      <div id="navbar-user"></div>
+    </div>
+  </nav>
+
+  <main class="container">
+    <section class="section">
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="contests"><svg class="icon"><use href="#icon-trophy"></use></svg>Конкурсы</button>
+        <button class="tab-btn" data-tab="import"><svg class="icon"><use href="#icon-upload-file"></use></svg>Загрузка участников</button>
+        <button class="tab-btn" data-tab="reports"><svg class="icon"><use href="#icon-chart"></use></svg>Отчёты</button>
+      </div>
+
+      <!-- ---------- Конкурсы ---------- -->
+      <div class="tab-panel active" id="panel-contests">
+        <div class="flex-between" style="margin-bottom:14px;">
+          <p class="section__subtitle" style="margin:0;">Создавайте и редактируйте конкурсы школы.</p>
+          <button class="btn" id="add-contest-btn"><svg class="icon"><use href="#icon-plus-circle"></use></svg>Новый конкурс</button>
+        </div>
+        <div class="card table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>Название</th><th>Категория</th><th>Статус</th><th>Сроки</th><th>Участников</th><th></th></tr>
+            </thead>
+            <tbody id="contests-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ---------- Загрузка участников ---------- -->
+      <div class="tab-panel" id="panel-import">
+        <p class="section__subtitle">Выберите конкурс и загрузите список участников в формате CSV или JSON.</p>
+        <div class="card">
+          <div class="field">
+            <label for="import-contest-select">Конкурс</label>
+            <select id="import-contest-select"></select>
+          </div>
+          <label class="file-drop" id="file-drop-label">
+            <svg class="icon"><use href="#icon-file"></use></svg>
+            <span>Выберите файл .csv или .json со списком участников</span>
+            <small>Формат CSV: login,firstName,lastName,className,points,status</small>
+            <input type="file" id="import-file-input" accept=".csv,.json" style="display:none;" />
+          </label>
+          <div id="import-preview" style="margin-top:16px;"></div>
+        </div>
+      </div>
+
+      <!-- ---------- Отчёты ---------- -->
+      <div class="tab-panel" id="panel-reports">
+        <p class="section__subtitle">Отчёт по активности участников: статусы, баллы, места.</p>
+        <div class="card">
+          <div class="flex-row" style="margin-bottom:16px;">
+            <div class="field" style="margin:0; min-width:220px;">
+              <label for="report-contest-select">Конкурс (необязательно)</label>
+              <select id="report-contest-select"><option value="">Все конкурсы</option></select>
+            </div>
+            <button class="btn" id="build-report-btn" style="margin-top:20px;"><svg class="icon"><use href="#icon-chart"></use></svg>Сформировать отчёт</button>
+            <button class="btn btn--ghost" id="download-report-btn" style="margin-top:20px;" disabled><svg class="icon"><use href="#icon-download"></use></svg>Скачать CSV</button>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table" id="report-table"><thead></thead><tbody></tbody></table>
+          </div>
+          <div class="empty-state" id="report-empty">Нажмите «Сформировать отчёт», чтобы увидеть данные.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ---------- модалка добавления/редактирования конкурса ---------- -->
+  <div class="modal-overlay hidden" id="contest-modal-overlay">
+    <div class="modal">
+      <h2 id="contest-modal-title">Новый конкурс</h2>
+      <form id="contest-form">
+        <input type="hidden" id="contest-id" />
+        <div class="field"><label>Название</label><input id="contest-title" required /></div>
+        <div class="field"><label>Категория</label><input id="contest-category" /></div>
+        <div class="field"><label>Описание</label><textarea id="contest-description" rows="3"></textarea></div>
+        <div class="flex-row">
+          <div class="field" style="flex:1;"><label>Начало</label><input type="date" id="contest-start" /></div>
+          <div class="field" style="flex:1;"><label>Окончание</label><input type="date" id="contest-end" /></div>
+        </div>
+        <div class="field">
+          <label>Статус</label>
+          <select id="contest-status">
+            <option value="upcoming">Скоро старт</option>
+            <option value="active">Идёт приём</option>
+            <option value="finished">Завершён</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Шаблон диплома</label>
+          <select id="contest-template">
+            <option value="t1">Классический (золото)</option>
+            <option value="t2">Современный (синий)</option>
+          </select>
+        </div>
+        <div class="modal__actions">
+          <button type="button" class="btn btn--ghost" id="contest-cancel-btn">Отмена</button>
+          <button type="submit" class="btn">Сохранить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/db.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

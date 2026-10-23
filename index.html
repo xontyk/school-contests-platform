@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Платформа школьных конкурсов — вход</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="login-page">
+    <div class="login-card">
+      <div class="login-card__crest"><svg class="icon"><use href="#icon-trophy"></use></svg></div>
+      <h1>Платформа школьных конкурсов</h1>
+      <p class="subtitle">Войдите, чтобы отслеживать участия и дипломы или управлять конкурсами школы.</p>
+
+      <form id="login-form">
+        <div class="field">
+          <label for="login">Логин</label>
+          <input id="login" name="login" type="text" autocomplete="username" required />
+        </div>
+        <div class="field">
+          <label for="password">Пароль</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required />
+        </div>
+        <p class="error-text" id="error-text"></p>
+        <button type="submit" class="btn" style="width:100%">Войти</button>
+      </form>
+
+      <div class="hint-box">
+        <strong>Тестовые аккаунты</strong><br />
+        Ученик: <code>petr</code> / <code>1234</code> (и anna, danil, maria, timur — пароль 1234)<br />
+        Администратор: <code>admin</code> / <code>admin123</code>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/db.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/login.js"></script>
+</body>
+</html>
