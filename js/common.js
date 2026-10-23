@@ -1,7 +1,16 @@
 /**
  * common.js — иконки, подписи статусов, уведомления, шапка и проверка роли.
+ * Подключается на всех страницах, функции отсюда вызывают student.js, teacher.js, login.js.
+ *
+ * ПОДСКАЗКА:
+ * • Подписи статусов ниже — это то, что видит пользователь в бейджах и таблицах.
+ *   Переименуешь «На проверке» → «Ждёт учителя» — изменится на всём сайте.
+ * • Новая иконка: добавь <symbol id="icon-имя"> в ICON_SPRITE и вызывай icon('имя').
+ * • showToast — всплывающее сообщение внизу экрана (время показа — внутри функции).
+ * • requireRole — «охранник» страницы: без входа или с чужой ролью отправит на login.html.
  */
 
+// статусы достижений (бейджи в таблицах ученика и учителя)
 const ACH_STATUS_LABELS = { pending: 'На проверке', approved: 'Подтверждено', rejected: 'Отклонено', revoked: 'Отозвано' };
 const CONTEST_STATUS_LABELS = { upcoming: 'Скоро', active: 'Идёт приём', finished: 'Завершён' };
 const RESULT_LABELS = { registered: 'Заявка подана', participant: 'Участник', '3': '3 место', '2': '2 место', '1': '1 место', absent: 'Не явился' };
@@ -105,7 +114,7 @@ function showToast(message, isError = false) {
   setTimeout(() => {
     toast.classList.remove('toast--visible');
     setTimeout(() => toast.remove(), 300);
-  }, 3600);
+  }, 3600); // 3600 мс = 3,6 с — столько сообщение висит на экране
 }
 
 /** Модалка-«причина»: возвращает введённый текст или null при отмене. */
@@ -154,6 +163,7 @@ async function requireRole(role) {
   return user;
 }
 
+/** Правый угол шапки: инициалы, имя и кнопка «Выйти». */
 function renderNavbar(user) {
   const slot = document.getElementById('navbar-user');
   if (!slot) return;
@@ -169,7 +179,10 @@ function renderNavbar(user) {
   });
 }
 
-/** Переключение вкладок по data-tab у кнопок и id="panel-<имя>" у панелей. */
+/**
+ * Переключение вкладок по data-tab у кнопок и id="panel-<имя>" у панелей.
+ * Новая вкладка: кнопка <button class="tab-btn" data-tab="xxx"> + <section class="tab-panel" id="panel-xxx">.
+ */
 function initTabs(onChange) {
   const buttons = document.querySelectorAll('.tab-btn[data-tab]');
   buttons.forEach((btn) => btn.addEventListener('click', () => {

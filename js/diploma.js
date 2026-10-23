@@ -5,11 +5,22 @@
  * свечением, крупный заголовок с зелёным подчёркиванием, «пилюли»,
  * круговой бейдж и искры — тот же визуальный язык, что и на сайте.
  * Выдаётся только за подтверждённое достижение (проверяется в UI и RLS).
+ *
+ * ПОДСКАЗКА: что поменять → что изменится на дипломе
+ * • diplomaHeadline()        — зелёное слово под «ДИПЛОМ» (ПОБЕДИТЕЛЯ / ПРИЗЁРА …).
+ * • diplomaReason()          — строка «за 1 место — олимпиада «…»».
+ * • renderDiplomaCanvas():
+ *     «фон и свечения»       — цвет фона и пятна света в углах;
+ *     «шапка»                — название портала и предметы сверху;
+ *     «заголовок»            — размер и цвет слова «ДИПЛОМ»;
+ *     «подвал»               — дата, номер, строка подписи учителя.
+ * Координаты — в пикселях холста 1600×1131: x слева направо, y сверху вниз.
  */
 
-const DIPLOMA_W = 1600;
-const DIPLOMA_H = 1131;
+const DIPLOMA_W = 1600; // ширина PNG в пикселях
+const DIPLOMA_H = 1131; // высота: 1600 / 1131 ≈ √2, как у листа A4
 
+/** Зелёное слово-заголовок по результату достижения. */
 function diplomaHeadline(a) {
   if (a.source === 'contest' || a.category === 'olympiad' || a.category === 'project') {
     if (a.place === '1') return 'ПОБЕДИТЕЛЯ';
@@ -19,6 +30,7 @@ function diplomaHeadline(a) {
   return 'ЗА УСПЕХ';
 }
 
+/** «За что» — текст под ФИО. */
 function diplomaReason(a) {
   const place = a.place && a.place !== 'participant' ? `${a.place} место` : 'участие';
   // «олимпиада «Муниципальная олимпиада…»» звучит коряво: тип пишем, только если его нет в названии
@@ -136,7 +148,7 @@ async function renderDiplomaCanvas(achievement, student) {
   // шапка с линией, как навигация сайта
   ctx.fillStyle = '#fff';
   ctx.font = '800 26px Unbounded';
-  ctx.fillText('ПОРТАЛ ДОСТИЖЕНИЙ ЛИЦЕЯ', L, 112);
+  ctx.fillText('ПОРТАЛ ДОСТИЖЕНИЙ ЛИЦЕЯ', L, 112); // название в шапке диплома
   ctx.font = '700 20px Manrope';
   ctx.fillStyle = 'rgba(255,255,255,.7)';
   ctx.textAlign = 'right';
@@ -147,7 +159,7 @@ async function renderDiplomaCanvas(achievement, student) {
 
   // заголовок: «ДИПЛОМ» + зелёное подчёркнутое слово
   ctx.fillStyle = '#fff';
-  ctx.font = '900 168px Unbounded';
+  ctx.font = '900 168px Unbounded'; // 168px — размер слова «ДИПЛОМ»
   ctx.fillText('ДИПЛОМ', L - 6, 330);
   const accent = diplomaHeadline(achievement);
   const accentSize = fitFont(ctx, accent, 900, 'Unbounded', 104, 900);
@@ -204,7 +216,7 @@ async function renderDiplomaCanvas(achievement, student) {
   ctx.fillText(`ДАТА: ${formatDate(achievement.date)}`, L, footY);
   ctx.fillText(`№ ${String(achievement.id).padStart(5, '0')}`, L + 300, footY);
   ctx.textAlign = 'right';
-  ctx.fillText('УЧИТЕЛЬ  ______________________', DIPLOMA_W - L, footY);
+  ctx.fillText('УЧИТЕЛЬ  ______________________', DIPLOMA_W - L, footY); // место для подписи
   ctx.textAlign = 'left';
 
   return canvas;

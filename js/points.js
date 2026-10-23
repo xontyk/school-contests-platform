@@ -5,7 +5,14 @@
  * сохранении база пересчитывает баллы сама, поэтому подмена числа в
  * браузере ничего не даёт. Эта копия нужна только для мгновенного
  * предпросмотра в форме. Обоснование категорий — README → «Система баллов».
+ *
+ * ПОДСКАЗКА: чтобы изменить, сколько баллов дают за олимпиаду или проект,
+ * поменяй число И здесь, И в calc_points() в supabase/schema.sql (потом
+ * запусти schema.sql в SQL Editor). Если поменять только здесь, форма
+ * покажет одно число, а база начислит другое.
  */
+
+// уровни олимпиад: label — как подписано в списках, points — баллы за участие и места
 
 const OLYMPIAD_LEVELS = {
   school: { label: 'Школьный', points: { participant: 2, '3': 5, '2': 6, '1': 8 } },
@@ -15,20 +22,22 @@ const OLYMPIAD_LEVELS = {
   international: { label: 'Международный', points: { participant: 30, '3': 60, '2': 80, '1': 100 } },
 };
 
+// уровни конкурсов проектов (стоят меньше олимпиад: нет единого судейства)
 const PROJECT_LEVELS = {
   school: { label: 'Школьный', points: { participant: 5, '3': 8, '2': 10, '1': 12 } },
   city: { label: 'Городской', points: { participant: 10, '3': 14, '2': 16, '1': 20 } },
   regional: { label: 'Региональный', points: { participant: 15, '3': 20, '2': 25, '1': 30 } },
 };
 
+// подписи, которые видит пользователь; переименуешь здесь — изменится во всех списках и таблицах
 const PLACE_LABELS = { participant: 'Участие', '3': '3 место', '2': '2 место', '1': '1 место' };
 
 const SUBJECT_LABELS = { physics: 'Физика', math: 'Математика', cs: 'Информатика' };
 const CATEGORY_LABELS = { academic: 'Академическое', olympiad: 'Олимпиада', project: 'Проект', volunteer: 'Волонтёрство' };
 
-const ACADEMIC_BASE_POINTS = 5;
-const VOLUNTEER_POINTS_PER_2H = 1;
-const VOLUNTEER_MAX_POINTS = 10;
+const ACADEMIC_BASE_POINTS = 5;    // баллы за академическое достижение
+const VOLUNTEER_POINTS_PER_2H = 1; // волонтёрство: 1 балл за каждые 2 часа
+const VOLUNTEER_MAX_POINTS = 10;   // потолок баллов за одну заявку волонтёрства
 
 const QUARTERS = ['I', 'II', 'III', 'IV'];
 

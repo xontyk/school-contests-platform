@@ -11,6 +11,14 @@ bot.py — Telegram-бот «Портал достижений лицея» (@ac
     или отозвал достижение (опрос базы раз в 15 секунд).
 
 Запуск:  python bot.py   (ключи — в bot/.env, см. README)
+
+ПОДСКАЗКА: что поменять → что изменится в боте
+  * POLL_SECONDS          — как часто бот проверяет решения учителя (уведомления);
+  * MENU                  — кнопки под полем ввода в Telegram;
+  * cmd_start / cmd_rating / cmd_portfolio / cmd_contests — тексты ответов на команды;
+  * add_* (AddFlow)       — шаги диалога «Добавить достижение»;
+  * set_my_commands в main() — список команд в меню «/» Telegram.
+После правок бота нужно перезапустить (Ctrl+C и снова python bot.py).
 """
 
 from __future__ import annotations
@@ -36,7 +44,7 @@ from db import Db
 load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
 SITE_URL = os.environ.get("SITE_URL", "").strip()
-POLL_SECONDS = 15
+POLL_SECONDS = 15  # раз в 15 секунд бот ищет новые решения учителя и присылает уведомления
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("bot")
@@ -54,6 +62,7 @@ LEVELS = {
 PLACES = {"participant": "Участие", "3": "3 место", "2": "2 место", "1": "1 место"}
 STATUS_TEXT = {"approved": "подтверждено", "rejected": "отклонено", "revoked": "отозвано", "pending": "на проверке"}
 
+# кнопки-меню внизу чата; текст кнопки должен совпадать с F.text == "..." у обработчика
 MENU = ReplyKeyboardMarkup(
     keyboard=[[KeyboardButton(text="Мой рейтинг"), KeyboardButton(text="Добавить достижение")],
               [KeyboardButton(text="Портфолио"), KeyboardButton(text="Конкурсы")]],
@@ -281,7 +290,7 @@ async def add_send(cb: CallbackQuery, state: FSMContext) -> None:
 
 
 # ---------------------------------------------------------------- уведомления
-async def notifier(bot: Bot) -> None:
+async def notifier(bot: Bot) -> None:  # фоновая задача: решения учителя → сообщения ученикам
     """Раз в POLL_SECONDS проверяет новые решения учителя и пишет ученику."""
     while True:
         try:

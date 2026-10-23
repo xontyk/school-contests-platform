@@ -3,6 +3,15 @@
  * Блоки: (1) карта созвездий и портфолио, (2) афиша конкурсов и мои
  * результаты, (3) мои достижения + форма, (4) рейтинг, (5) Telegram и печать.
  * Все данные — из общей базы через api.*; права ограничивает RLS.
+ *
+ * ПОДСКАЗКА: что на экране → какая функция его рисует
+ * • Вкладка «Карта и портфолио» (звёзды, плитки баллов, таблица)  → renderMap()
+ * • Вкладка «Конкурсы» (карточки, «Участвовать», мои результаты)  → renderContests()
+ * • Вкладка «Достижения» (таблица)                                 → renderAchievements()
+ * • Окно «Добавить достижение» и предпросмотр баллов              → initAchievementForm(), updatePreview()
+ * • Вкладка «Рейтинг» (фильтры, топ-10, «(вы)»)                    → renderRating()
+ * • Кнопки «Подключить Telegram» и «Портфолио в PDF»               → initToolbar()
+ * Разметка (HTML) этих блоков — в student.html, внешний вид — в css/style.css.
  */
 
 let ME = null;
@@ -40,6 +49,7 @@ function renderMap() {
 }
 
 // ---------------- (2) конкурсы ----------------
+/** Афиша конкурсов: карточка на каждый конкурс + блок «Мои результаты». */
 async function renderContests() {
   const [contests, mine] = await Promise.all([api.contests.list(), api.participations.listMine()]);
   const byContest = Object.fromEntries(mine.map((p) => [p.contestId, p]));
@@ -88,6 +98,7 @@ async function renderContests() {
 }
 
 // ---------------- (3) мои достижения ----------------
+/** Таблица «Мои достижения» со статусами и комментариями учителя. */
 function renderAchievements() {
   const tbody = document.getElementById('achievements-tbody');
   tbody.innerHTML = MY_ACH.length ? MY_ACH.map((a) => `
@@ -102,6 +113,7 @@ function renderAchievements() {
     </tr>`).join('') : '<tr><td colspan="7" class="empty-state">Пока нет достижений — добавьте первое!</td></tr>';
 }
 
+/** Показывает нужные поля формы: уровень и место — для олимпиад и проектов, часы — для волонтёрства. */
 function syncForm() {
   const category = document.getElementById('ach-category').value;
   const hasLevels = fillLevelOptions(document.getElementById('ach-level'), category);
@@ -109,6 +121,7 @@ function syncForm() {
   document.getElementById('ach-hours-field').hidden = category !== 'volunteer';
   updatePreview();
 }
+/** «Будет начислено N баллов» — считается тут же, по таблице из points.js. */
 function updatePreview() {
   document.getElementById('ach-points').textContent = calcAchievementPoints({
     category: document.getElementById('ach-category').value,
@@ -170,6 +183,7 @@ function initAchievementForm() {
 }
 
 // ---------------- (4) рейтинг ----------------
+/** Рейтинг лицея с фильтрами; строка текущего ученика помечается «(вы)». */
 async function renderRating() {
   const rows = await api.rating.compute({
     className: document.getElementById('r-class').value,
@@ -198,6 +212,7 @@ async function renderRating() {
 }
 
 // ---------------- (5) Telegram, печать, дипломы ----------------
+/** Кнопки над вкладками: привязка Telegram (ссылка с одноразовым кодом) и печать в PDF. */
 function initToolbar() {
   const tgBtn = document.getElementById('telegram-btn');
   if (ME.telegramLinked) tgBtn.querySelector('span').textContent = 'Telegram подключён';
@@ -237,6 +252,7 @@ function initToolbar() {
   });
 }
 
+/** Заново загружает достижения ученика и перерисовывает карту, таблицу и конкурсы. */
 async function reloadMine() {
   MY_ACH = await api.achievements.listMine();
   renderMap();

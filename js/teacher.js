@@ -5,6 +5,17 @@
  * начислений с отменой, (5) пользователи: роль, класс, прямое начисление, (6) рейтинг + CSV.
  * Любое изменение баллов идёт через RPC-функции базы, которые сами
  * проверяют роль и пишут историю в award_log.
+ *
+ * ПОДСКАЗКА: что на экране → какая функция его рисует
+ * • «Заявки» (кто хочет зарегистрироваться)          → renderRegistrations()
+ * • «Конкурсы» (карточки, «Новый конкурс»)            → renderContests(), openContestModal()
+ * • окно «Участники» (результат каждому ученику)      → openParticipants(), renderParticipants()
+ * • «Проверка» (достижения на проверке)               → renderVerify(), openVerify()
+ * • «Начисления» (отзыв награды, история)             → renderAwards(), showHistory()
+ * • «Пользователи» (роли, классы, «Начислить»)        → renderStudents(), drawUsers()
+ * • «Рейтинг» и «Скачать CSV»                         → renderRating()
+ * • Все нажатия кнопок в таблицах (Принять, Сохранить, Отозвать…) → wireActions()
+ * Цифра у вкладки («Заявки 2») — setCount(). Разметка вкладок и окон — teacher.html.
  */
 
 let ME = null;
@@ -17,6 +28,7 @@ let LAST_RATING = [];
 const SOURCE_LABELS = { student: 'Ученик', teacher: 'Учитель', contest: 'Конкурс', telegram: 'Бот' };
 const LOG_LABELS = { awarded: 'Начислено', approved: 'Подтверждено', rejected: 'Отклонено', revoked: 'Отозвано' };
 
+// окна (модалки): показываются снятием класса hidden; закрываются фоном или кнопкой data-close
 function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
 function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 function wireModalClose() {
@@ -24,10 +36,12 @@ function wireModalClose() {
     if (e.target === m || e.target.closest('[data-close]')) m.classList.add('hidden');
   }));
 }
+/** Выполняет действие; при успехе — зелёный тост okMessage, при ошибке — красный с текстом из базы. */
 async function guard(fn, okMessage) {
   try { await fn(); if (okMessage) showToast(okMessage); return true; }
   catch (ex) { showToast(ex.message, true); return false; }
 }
+// число-счётчик на кнопке вкладки; при нуле скрывается
 function setCount(id, n) { const el = document.getElementById(id); el.hidden = !n; el.textContent = n; }
 function periodSelectHtml(onlyQuarters) {
   return periodOptions().filter((o) => !onlyQuarters || o.value.includes('четверть'))
@@ -54,6 +68,7 @@ async function renderRegistrations() {
 }
 
 // ================= (2) конкурсы =================
+/** Карточки конкурсов с числом участников и кнопками «Участники», «Изменить», «Удалить». */
 async function renderContests() {
   const [contests, counts] = await Promise.all([api.contests.list(), api.participations.countsByContest()]);
   CONTESTS = contests;
@@ -85,6 +100,7 @@ function syncContestLevel(selected) {
   fillLevelOptions(document.getElementById('c-level'), document.getElementById('c-category').value);
   if (selected) document.getElementById('c-level').value = selected;
 }
+/** Окно создания (contest = null) или редактирования конкурса. */
 function openContestModal(contest) {
   document.getElementById('contest-modal-title').textContent = contest ? 'Изменить конкурс' : 'Новый конкурс';
   document.getElementById('c-id').value = contest ? contest.id : '';
@@ -112,6 +128,7 @@ async function openParticipants(contestId) {
   openModal('participants-modal');
 }
 
+/** Таблица участников конкурса: текущий результат, выбор нового, баллы. */
 async function renderParticipants() {
   const list = await api.participations.listForContest(CURRENT_CONTEST.id);
   const awards = Object.fromEntries((await api.achievements.byIds(list.map((p) => p.achievementId).filter(Boolean))).map((a) => [a.id, a]));
@@ -134,6 +151,7 @@ async function renderParticipants() {
 }
 
 // ================= (3) проверка =================
+/** Список достижений «На проверке»; число попадает на вкладку «Проверка». */
 async function renderVerify() {
   PENDING_ACH = await api.achievements.listAll({ status: 'pending' });
   setCount('count-verify', PENDING_ACH.length);
@@ -148,6 +166,7 @@ async function renderVerify() {
     </tr>`).join('') : '<tr><td colspan="6" class="empty-state">Все заявки проверены.</td></tr>';
 }
 
+/** Окно проверки: можно поправить баллы, написать комментарий, «Подтвердить» или «Отклонить». */
 function openVerify(id) {
   const a = PENDING_ACH.find((x) => x.id === id);
   CURRENT_VERIFY = a;
@@ -164,6 +183,7 @@ function openVerify(id) {
 }
 
 // ================= (4) журнал начислений =================
+/** Журнал выданных баллов с фильтром по статусу и кнопкой «Отозвать». */
 async function renderAwards() {
   const status = document.getElementById('awards-filter').value;
   const list = await api.achievements.listAll({ status });
@@ -181,6 +201,7 @@ async function renderAwards() {
     </tr>`).join('') : '<tr><td colspan="6" class="empty-state">Записей нет.</td></tr>';
 }
 
+/** Окно «История начислений» по одному достижению (из таблицы award_log). */
 async function showHistory(achievementId) {
   const log = await api.achievements.history(achievementId);
   document.getElementById('history-body').innerHTML = log.length ? `
@@ -195,6 +216,7 @@ async function showHistory(achievementId) {
 let USERS = [];
 let TOTALS = {};
 
+/** Загружает всех пользователей и их баллы, затем рисует таблицу. */
 async function renderStudents() {
   const [users, rating] = await Promise.all([api.users.listAll(), api.rating.compute()]);
   USERS = users;
@@ -202,6 +224,7 @@ async function renderStudents() {
   drawUsers();
 }
 
+/** Таблица «Пользователи» с учётом фильтра и поиска (без повторного запроса к базе). */
 function drawUsers() {
   const filter = document.getElementById('u-filter').value;
   const q = document.getElementById('u-search').value.trim().toLowerCase();
@@ -248,6 +271,7 @@ function updateAddPreview() {
 }
 
 // ================= (6) рейтинг =================
+/** Рейтинг лицея по фильтрам «Класс», «Направление», «Период». */
 async function renderRating() {
   const rows = await api.rating.compute({
     className: document.getElementById('t-class').value,
@@ -269,6 +293,11 @@ async function renderRating() {
 }
 
 // ================= обработчики =================
+/**
+ * Один обработчик кликов на всю страницу: по data-атрибуту кнопки (data-approve,
+ * data-save-user, data-revoke …) понимает, что нажали, и вызывает нужный api.*.
+ * Новая кнопка в таблице = новый data-атрибут + ветка else if ниже.
+ */
 function wireActions() {
   document.body.addEventListener('click', async (e) => {
     const t = (sel) => e.target.closest(sel);

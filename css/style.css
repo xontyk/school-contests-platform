@@ -1,3 +1,19 @@
+/* =====================================================================
+   style.css — весь внешний вид сайта (одна таблица стилей на 4 страницы).
+
+   ПОДСКАЗКА: где что менять
+   • Цвета всего сайта  → блок :root ниже (--green, --blue, --bg …).
+     Поменяешь --green — зелёным станут кнопки, подчёркивания, баллы, точки.
+   • Шрифты             → @font-face и --display (заголовки).
+   • Шапка сайта        → «шапка».          • Кнопки        → «кнопки-пилюли».
+   • Главный экран      → «лендинг: hero».  • Таблицы       → «таблицы».
+   • Вход/регистрация   → «вход/регистрация».
+   • Карта созвездий    → «карта созвездий». • Окна, тосты   → «модальные окна».
+   • Печать портфолио   → «печать портфолио».
+   • Телефон/планшет    → @media (max-width: 960px / 640px) в конце файла.
+   Стили применяются сразу: сохрани файл и обнови страницу (Ctrl+F5).
+   ===================================================================== */
+
 /* Шрифты — локально (assets/fonts), variable fonts: font-weight задан
    диапазоном, иначе браузер не находит жирные начертания. Unbounded —
    широкий жирный гротеск заголовков (как в референсе), Manrope — текст. */
@@ -8,29 +24,31 @@
 @font-face { font-family: "Manrope"; font-style: normal; font-weight: 200 800; font-display: swap; src: url("../assets/fonts/manrope-cyrillic-ext.woff2") format("woff2"); unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F; }
 @font-face { font-family: "Manrope"; font-style: normal; font-weight: 200 800; font-display: swap; src: url("../assets/fonts/manrope-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+2000-206F, U+2122; }
 
+/* Дизайн-токены: каждая переменная используется по всему сайту.
+   Меняешь значение здесь — меняется везде, искать по файлу не нужно. */
 :root {
-  --bg: #070707;
-  --bg-elev: #111113;
-  --bg-elev-2: #19191d;
-  --line: rgba(255, 255, 255, 0.14);
-  --line-strong: rgba(255, 255, 255, 0.55);
-  --text: #f4f4f2;
-  --text-muted: #a3a3ab;
-  --green: #4be36b;
-  --green-glow: rgba(46, 140, 64, 0.55);
-  --blue: #3d48ff;
-  --blue-text: #8b93ff;
+  --bg: #070707;            /* фон страниц (почти чёрный) */
+  --bg-elev: #111113;       /* фон карточек, таблиц, окон */
+  --bg-elev-2: #19191d;     /* фон полей ввода и вложенных блоков */
+  --line: rgba(255, 255, 255, 0.14);        /* тонкие рамки и разделители */
+  --line-strong: rgba(255, 255, 255, 0.55); /* рамки контурных кнопок */
+  --text: #f4f4f2;          /* основной текст */
+  --text-muted: #a3a3ab;    /* второстепенный текст, подписи */
+  --green: #4be36b;         /* главный акцент: кнопки, подчёркивания, баллы */
+  --green-glow: rgba(46, 140, 64, 0.55);    /* зелёное свечение в углу страницы */
+  --blue: #3d48ff;          /* второй акцент: искры, баннер Telegram */
+  --blue-text: #8b93ff;     /* синий для текста на тёмном (читаемее, чем --blue) */
   --violet: #6a3fe0;
-  --navy: #141a3a;
-  --subj-physics: #7a84ff;
-  --subj-math: #4be36b;
-  --subj-cs: #d08cff;
-  --subj-other: #e4e4e7;
-  --state-approved: #4be36b;
-  --state-pending: #f6c652;
-  --state-rejected: #ff6b7a;
-  --radius: 22px;
-  --radius-sm: 14px;
+  --navy: #141a3a;          /* арка с тегами на главной */
+  --subj-physics: #7a84ff;  /* цвет физики: метки предметов и звёзды на карте */
+  --subj-math: #4be36b;     /* цвет математики */
+  --subj-cs: #d08cff;       /* цвет информатики */
+  --subj-other: #e4e4e7;    /* проекты и волонтёрство без предмета */
+  --state-approved: #4be36b; /* статус «Подтверждено» */
+  --state-pending: #f6c652;  /* статус «На проверке» */
+  --state-rejected: #ff6b7a; /* «Отклонено», ошибки в формах */
+  --radius: 22px;           /* скругление карточек; 0 — будут прямые углы */
+  --radius-sm: 14px;        /* скругление полей ввода */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --display: "Unbounded", "Segoe UI", sans-serif;
 }
@@ -106,6 +124,7 @@ a.pill:hover { background: var(--text); color: #000; border-color: var(--text); 
 .hero__grid { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 32px; margin-top: 28px; }
 .hero__copy { display: flex; flex-direction: column; }
 .hero__copy .badge-ring { position: relative; left: auto; bottom: auto; margin-top: 36px; }
+/* размер главного заголовка: clamp(минимум на телефоне, % ширины экрана, максимум) */
 .hero h1 { font-size: clamp(42px, 9vw, 120px); line-height: 0.98; font-weight: 900; }
 .hero h1 .accent { color: var(--green); display: inline-block; position: relative; padding-bottom: 6px; }
 .hero h1 .accent::after { content: ""; position: absolute; left: 0; right: 0; bottom: -2px; height: 6px; border-radius: 4px; background: var(--green); }
@@ -135,6 +154,8 @@ a.pill:hover { background: var(--text); color: #000; border-color: var(--text); 
 .badge-ring .ring-blue { fill: var(--blue-text); }
 .badge-ring .ring-arrow { position: absolute; inset: 0; margin: auto; width: 46px; height: 46px; color: var(--text); transition: transform .2s var(--ease-out); }
 .badge-ring:hover .ring-arrow { transform: translateX(5px); color: var(--green); }
+/* скорость вращения круглого бейджа — «22s» в .badge-ring svg.ring выше
+   (меньше число — быстрее); дрейф тегов в арке — «18s» в .hero__arch-row */
 @keyframes spin-slow { to { transform: rotate(360deg); } }
 @keyframes drift { from { transform: translateX(0); } to { transform: translateX(-90px); } }
 
@@ -286,6 +307,7 @@ table.data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .constellation svg { display: block; width: 100%; height: auto; }
 .constellation__legend { display: flex; flex-wrap: wrap; gap: 8px; padding: 18px 18px 0; }
 .constellation__legend .subject { background: rgba(255, 255, 255, 0.08); }
+/* мерцание звёзд: 3.2s — длительность одного «вдоха»; scale и opacity — насколько сильно мерцает */
 .constellation__star { transform-box: fill-box; transform-origin: center; animation: star-twinkle 3.2s ease-in-out infinite; animation-delay: var(--twinkle-delay, 0s); }
 @keyframes star-twinkle { 0%, 100% { opacity: .82; transform: scale(.94) rotate(0deg); } 50% { opacity: 1; transform: scale(1.06) rotate(12deg); } }
 .constellation__empty { padding: 60px 20px; text-align: center; color: var(--text-muted); }
@@ -308,6 +330,7 @@ table.data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .toast--error .icon { color: #000; }
 
 /* ---------- печать портфолио ---------- */
+/* Печать: что скрыть и как перекрасить, когда ученик жмёт «Портфолио в PDF» */
 @media print {
   body { background: #fff; color: #000; }
   .glow-page::before, .navbar, .tabs, .no-print, #toast-box { display: none !important; }
@@ -316,10 +339,12 @@ table.data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
   .tab-panel { display: block !important; }
 }
 
+/* Если в системе включено «уменьшить движение» — все анимации выключаются */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 
+/* Планшет и узкий ноутбук (до 960px): колонки складываются в одну */
 @media (max-width: 960px) {
   .hero__grid { grid-template-columns: 1fr; }
   .hero__stage { min-height: 0; }
@@ -333,6 +358,7 @@ table.data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
   .auth-side { border-right: none; border-bottom: 1px solid var(--line); padding: 32px 24px; gap: 28px; }
   .auth-panel { padding: 32px 24px 48px; }
 }
+/* Телефон (до 640px): меньше отступы, бейджи и шрифты */
 @media (max-width: 640px) {
   .container { padding: 0 16px; }
   .navbar .container { padding-top: 10px; padding-bottom: 10px; }

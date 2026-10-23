@@ -22,6 +22,8 @@
     </div>
   </nav>
 
+  <!-- ПОДСКАЗКА: главный экран. Текст заголовка «Карта достижений лицея», описание и кнопки — прямо здесь;
+       пилюли «Олимпиады/Проекты…» и теги в синей арке — ниже в .hero__stage; размеры — css «лендинг: hero». -->
   <header class="hero">
     <div class="container">
       <h1>Карта <span class="accent">достижений</span><br>лицея</h1>
@@ -63,6 +65,7 @@
     </div>
   </header>
 
+  <!-- ПОДСКАЗКА: полоса из 4 чисел (баллы, достижения, ученики, конкурсы) — считает база функцией get_public_stats(), заполняет скрипт внизу страницы. -->
   <section class="section--tight">
     <div class="container stat-row" id="landing-stats">
       <div class="stat stat--total"><strong id="stat-points">—</strong><span>баллов в рейтинге</span></div>
@@ -72,6 +75,7 @@
     </div>
   </section>
 
+  <!-- ПОДСКАЗКА: афиша конкурсов. Карточки не пишутся руками: скрипт внизу берёт конкурсы из базы (их создаёт учитель в кабинете). -->
   <section class="section" id="contests">
     <div class="container">
       <div class="section-head">
@@ -82,6 +86,7 @@
     </div>
   </section>
 
+  <!-- ПОДСКАЗКА: «Как это работает» — 4 шага, текст правится прямо здесь. -->
   <section class="section" id="how">
     <div class="container">
       <div class="section-head">
@@ -97,6 +102,7 @@
     </div>
   </section>
 
+  <!-- ПОДСКАЗКА: таблица баллов — только для показа. Реальные баллы считает calc_points() в supabase/schema.sql; меняешь числа там — поправь и здесь. -->
   <section class="section" id="points">
     <div class="container">
       <div class="section-head">
@@ -123,6 +129,7 @@
     </div>
   </section>
 
+  <!-- ПОДСКАЗКА: синий баннер Telegram-бота; ссылка t.me/… ведёт на бота из js/config.js. -->
   <section class="section" id="bot">
     <div class="container">
       <div class="tg-banner">
@@ -142,6 +149,7 @@
     </div>
   </section>
 
+  <!-- ПОДСКАЗКА: последний призыв «Зарегистрироваться» внизу страницы. -->
   <section class="final-cta">
     <div class="container">
       <h2>Зажги <span class="accent">первую</span><br>звезду</h2>
@@ -159,6 +167,7 @@
   <script src="js/points.js"></script>
   <script src="js/common.js"></script>
   <script src="js/api.js"></script>
+  <!-- скрипт главной: загружает 4 числа статистики и афишу конкурсов из базы и вставляет их в разметку выше -->
   <script>
     // Лендинг публичный: статистика и афиша читаются без входа (anon-доступ по RLS).
     (async function initLanding() {

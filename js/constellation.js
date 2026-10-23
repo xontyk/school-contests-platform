@@ -7,6 +7,9 @@
  * кластера соединены линией. Позиции детерминированы по id, поэтому
  * карта не «прыгает» между перерисовками. Отозванные и непроверенные
  * достижения на карту не попадают.
+ *
+ * ПОДСКАЗКА: cx — где по горизонтали стоит кластер (0 = левый край, 1 = правый);
+ * color — цвет звёзд (переменные из css/style.css); label — подпись в легенде.
  */
 
 const CONSTELLATION_CLUSTERS = [
@@ -16,6 +19,7 @@ const CONSTELLATION_CLUSTERS = [
   { key: 'other', label: 'Проекты и волонтёрство', color: 'var(--subj-other)', cx: 0.86 },
 ];
 
+/** Строка → число 0…1, всегда одинаковое для одной строки (звёзды не «прыгают» между загрузками). */
 function hashToUnit(str) {
   let h = 2166136261;
   for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 16777619) >>> 0;
@@ -33,7 +37,7 @@ function sparklePath(x, y, r) {
 }
 
 function renderConstellation(rootEl, achievements) {
-  const W = 760, H = 320;
+  const W = 760, H = 320; // «холст» карты; на экране SVG растягивается по ширине блока
   const approved = achievements.filter((a) => a.status === 'approved');
 
   if (!approved.length) {
@@ -48,7 +52,7 @@ function renderConstellation(rootEl, achievements) {
   let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Карта созвездий: ${approved.length} подтверждённых достижений">`;
 
   // фоновая «звёздная пыль» — детерминированная, чтобы не мерцала при перерисовке
-  for (let i = 0; i < 60; i++) {
+  for (let i = 0; i < 60; i++) { // 60 — количество фоновых точек-звёзд
     const x = hashToUnit(`dx${i}`) * W;
     const y = hashToUnit(`dy${i}`) * H;
     const r = 0.6 + hashToUnit(`dr${i}`) * 1.1;
@@ -62,16 +66,17 @@ function renderConstellation(rootEl, achievements) {
     const stars = items.map((a, idx) => {
       const id = String(a.id);
       const angle = (idx / items.length) * Math.PI * 2 + hashToUnit(id + 'x') * 0.9;
-      const radius = 30 + hashToUnit(id + 'y') * 64;
+      const radius = 30 + hashToUnit(id + 'y') * 64; // насколько далеко звезда от центра кластера
       return {
         a,
         x: baseX + Math.cos(angle) * radius * 0.6,
         y: H / 2 + Math.sin(angle) * radius,
-        r: 9 + (a.points / maxPoints) * 15,
+        r: 9 + (a.points / maxPoints) * 15, // размер звезды: от 9 (мало баллов) до 24 (больше всех)
         delay: (hashToUnit(id + 'tw') * 3.2).toFixed(2),
       };
     });
 
+    // пунктирная линия-созвездие между звёздами одного предмета
     if (stars.length > 1) {
       const d = stars.map((s, i) => `${i ? 'L' : 'M'}${s.x.toFixed(1)},${s.y.toFixed(1)}`).join(' ');
       svg += `<path d="${d}" fill="none" stroke="${cluster.color}" stroke-width="1.2" stroke-dasharray="3 5" opacity="0.5"/>`;

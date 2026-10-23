@@ -2,6 +2,13 @@
  * login.js — вход, регистрация в три шага (e-mail → код или ссылка из письма →
  * пароль и ФИО) и восстановление пароля по ссылке из письма. Письма отправляет
  * Supabase Auth; после регистрации профиль ждёт решения учителя (status = pending).
+ *
+ * ПОДСКАЗКА: login.html — это несколько «экранов» (section.auth-step), видим один.
+ *   panel-login         — вход               panel-register-1..3 — шаги регистрации
+ *   panel-register-done — «Заявка отправлена» panel-reset-*      — восстановление пароля
+ * Переключает их showPanel(id). Тексты на экранах — в login.html,
+ * тексты ошибок входа — в AUTH_ERRORS (js/api.js). 60 с до повторной отправки
+ * письма — в startResendCooldown(), 20 с ожидания сервера — в withBusy().
  */
 
 let REG_EMAIL = '';
@@ -12,9 +19,11 @@ const STEPS = ['panel-register-1', 'panel-register-2', 'panel-register-3', 'pane
 const URL_HASH = new URLSearchParams(location.hash.slice(1));
 const URL_QUERY = new URLSearchParams(location.search);
 
+// показать один экран формы, остальные скрыть
 function showPanel(id) {
   document.querySelectorAll('.auth-step').forEach((s) => s.classList.toggle('active', s.id === id));
 }
+// подсветить вкладку «Вход» или «Регистрация»
 function setTabs(tab) {
   document.getElementById('tab-login-btn').classList.toggle('active', tab === 'login');
   document.getElementById('tab-register-btn').classList.toggle('active', tab === 'register');
@@ -57,6 +66,7 @@ function showError(el, message) {
   el.classList.add('shake');
 }
 
+// кнопка «Отправить ещё раз» блокируется на 60 секунд (защита от лимита писем)
 function startResendCooldown() {
   const btn = document.getElementById('resend-code');
   let left = 60;

@@ -16,6 +16,7 @@
   </nav>
 
   <main class="container">
+    <!-- ПОДСКАЗКА: шапка кабинета и вкладки; каждая вкладка ниже — <section id="panel-…">, её заполняет функция из js/teacher.js -->
     <div class="page-head">
       <div>
         <h1>Кабинет <span class="accent">учителя</span></h1>
@@ -33,6 +34,7 @@
     </div>
 
     <!-- ===================== Заявки на регистрацию ===================== -->
+    <!-- заявки на регистрацию (renderRegistrations) -->
     <section class="tab-panel active" id="panel-registrations">
       <div class="card">
         <h2 class="card-title">Заявки на регистрацию</h2>
@@ -47,6 +49,7 @@
     </section>
 
     <!-- ===================== Конкурсы ===================== -->
+    <!-- конкурсы и их участники (renderContests, openParticipants) -->
     <section class="tab-panel" id="panel-contests">
       <div class="flex-between" style="margin-bottom:16px;">
         <p class="muted" style="margin:0;">Публикуйте конкурсы и выставляйте результаты — призовое место начисляет баллы, неверный результат можно отменить с причиной.</p>
@@ -56,6 +59,7 @@
     </section>
 
     <!-- ===================== Проверка достижений ===================== -->
+    <!-- достижения на проверке (renderVerify, openVerify) -->
     <section class="tab-panel" id="panel-verify">
       <div class="card">
         <h2 class="card-title">На проверке</h2>
@@ -70,6 +74,7 @@
     </section>
 
     <!-- ===================== Начисления (подтверждённые/отозванные) ===================== -->
+    <!-- журнал начислений, отзыв наград (renderAwards, showHistory) -->
     <section class="tab-panel" id="panel-awards">
       <div class="card">
         <div class="flex-between">
@@ -90,6 +95,7 @@
     </section>
 
     <!-- ===================== Ученики ===================== -->
+    <!-- пользователи: роли, классы, создание аккаунтов админом (renderStudents, drawUsers) -->
     <section class="tab-panel" id="panel-students">
       <div class="card">
         <div class="flex-between">
@@ -118,6 +124,7 @@
     </section>
 
     <!-- ===================== Рейтинг ===================== -->
+    <!-- рейтинг и выгрузка CSV (renderRating) -->
     <section class="tab-panel" id="panel-rating">
       <div class="card">
         <div class="flex-between" style="margin-bottom:6px;">

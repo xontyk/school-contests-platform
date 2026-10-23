@@ -9,6 +9,14 @@
  *
  * Разделы: auth, registrations, users, contests, participations,
  * achievements, rating, stats, telegram, reports.
+ *
+ * ПОДСКАЗКА: как читать запрос к базе
+ *   sb.from('contests').select('*').order('start_date')  — «дай все конкурсы по дате»
+ *   sb.from('profiles').update({...}).eq('id', id)        — «измени профиль с этим id»
+ *   sb.rpc('verify_achievement', {...})                    — вызвать функцию из schema.sql
+ * Если база откажет (нет прав, неверные данные), unwrap() бросит ошибку,
+ * а страница покажет её красным сообщением. Тексты ошибок входа — в AUTH_ERRORS.
+ * Новое поле в таблице: добавь его в schema.sql и в toProfile/toAchievement/toContest ниже.
  */
 
 const api = (() => {

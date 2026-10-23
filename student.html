@@ -16,6 +16,7 @@
   </nav>
 
   <main class="container">
+    <!-- ПОДСКАЗКА: заголовок «Моя карта», ФИО ученика и кнопки Telegram / PDF (логика — initToolbar() в js/student.js) -->
     <div class="page-head">
       <div>
         <h1>Моя <span class="accent">карта</span></h1>
@@ -27,6 +28,7 @@
       </div>
     </div>
 
+    <!-- ПОДСКАЗКА: вкладки. data-tab="xxx" у кнопки открывает <section id="panel-xxx"> ниже; no-print — не печатается в PDF -->
     <div class="tabs no-print">
       <button class="tab-btn active" data-tab="map">Карта и портфолио</button>
       <button class="tab-btn" data-tab="contests">Конкурсы <span class="count" id="count-contests" hidden></span></button>
@@ -35,6 +37,7 @@
     </div>
 
     <!-- ===================== Карта и портфолио ===================== -->
+    <!-- карта созвездий (js/constellation.js) + плитки баллов и таблица портфолио (renderMap) -->
     <section class="tab-panel active" id="panel-map">
       <div class="constellation">
         <div class="constellation__legend">
@@ -61,6 +64,7 @@
     </section>
 
     <!-- ===================== Конкурсы ===================== -->
+    <!-- афиша конкурсов и «Мои результаты» (renderContests) -->
     <section class="tab-panel" id="panel-contests">
       <div class="contest-grid" id="contest-grid"></div>
       <div class="card" style="margin-top:22px;">
@@ -76,6 +80,7 @@
     </section>
 
     <!-- ===================== Достижения ===================== -->
+    <!-- мои достижения и кнопка «Добавить» (renderAchievements, initAchievementForm) -->
     <section class="tab-panel" id="panel-achievements">
       <div class="card">
         <div class="flex-between">
@@ -95,6 +100,7 @@
     </section>
 
     <!-- ===================== Рейтинг ===================== -->
+    <!-- рейтинг с фильтрами (renderRating) -->
     <section class="tab-panel" id="panel-rating">
       <div class="card">
         <div class="flex-row" style="margin-bottom:6px;">
