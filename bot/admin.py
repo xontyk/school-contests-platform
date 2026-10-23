@@ -5,6 +5,10 @@ admin.py — служебные команды для владельца пор�
         Создать учителя (или сделать учителем существующий аккаунт) без письма.
         ФИО (если не указано) и пароль спрашиваются в терминале, пароль нигде не сохраняется.
 
+    python admin.py password EMAIL
+        Задать новый пароль любому пользователю без письма (если почта не доходит).
+        Пароль спрашивается в терминале.
+
     python admin.py clear-demo
         Удалить демо-аккаунты *@lyceum.ru из seed.py вместе с их достижениями,
         заявками и конкурсами, которые создал демо-учитель.
@@ -22,16 +26,41 @@ from seed import ensure_user
 DEMO_DOMAIN = "@lyceum.ru"
 
 
-async def make_teacher(email: str, full_name: str) -> None:
-    email = email.strip().lower()
-    parts = (full_name or input("ФИО (Фамилия Имя Отчество): ")).split()
-    if len(parts) < 2:
-        raise SystemExit("Укажите ФИО в кавычках: \"Фамилия Имя Отчество\"")
+def ask_password() -> str:
     password = getpass.getpass("Пароль (не отображается): ")
     if len(password) < 6:
         raise SystemExit("Пароль должен быть не короче 6 символов.")
     if getpass.getpass("Повторите пароль: ") != password:
         raise SystemExit("Пароли не совпадают.")
+    return password
+
+
+async def find_user_id(db: Db, email: str) -> str | None:
+    page = await db.http.get("/auth/v1/admin/users", params={"page": 1, "per_page": 1000})
+    page.raise_for_status()
+    return next((u["id"] for u in page.json()["users"] if u.get("email") == email), None)
+
+
+async def set_password(email: str) -> None:
+    email = email.strip().lower()
+    db = Db()
+    try:
+        uid = await find_user_id(db, email)
+        if not uid:
+            raise SystemExit(f"Пользователь {email} не найден.")
+        password = ask_password()
+        (await db.http.put(f"/auth/v1/admin/users/{uid}", json={"password": password, "email_confirm": True})).raise_for_status()
+        print(f"Готово: пароль для {email} изменён.")
+    finally:
+        await db.close()
+
+
+async def make_teacher(email: str, full_name: str) -> None:
+    email = email.strip().lower()
+    parts = (full_name or input("ФИО (Фамилия Имя Отчество): ")).split()
+    if len(parts) < 2:
+        raise SystemExit("Укажите ФИО в кавычках: \"Фамилия Имя Отчество\"")
+    password = ask_password()
     db = Db()
     try:
         uid = await ensure_user(db, email, password)
@@ -72,6 +101,8 @@ def main() -> None:
     args = sys.argv[1:]
     if len(args) in (2, 3) and args[0] == "teacher":
         asyncio.run(make_teacher(args[1], args[2] if len(args) == 3 else ""))
+    elif len(args) == 2 and args[0] == "password":
+        asyncio.run(set_password(args[1]))
     elif args == ["clear-demo"]:
         asyncio.run(clear_demo())
     else:

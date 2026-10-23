@@ -20,10 +20,15 @@ const api = (() => {
     'Email rate limit exceeded': 'Почтовый лимит исчерпан: сайт может отправить лишь несколько писем в час. Попробуйте через час или попросите учителя.',
     'email rate limit exceeded': 'Почтовый лимит исчерпан: сайт может отправить лишь несколько писем в час. Попробуйте через час или попросите учителя.',
     'Password should be at least 6 characters.': 'Пароль должен быть не короче 6 символов.',
+    'New password should be different from the old password.': 'Новый пароль совпадает со старым — придумайте другой.',
+    'Auth session missing!': 'Ссылка из письма устарела — запросите новую.',
   };
 
   function fail(error) {
     const msg = (error && error.message) || String(error);
+    if (/^For security purposes, you can only request this after/.test(msg)) {
+      throw new Error('Письмо уже отправлено. Повторить можно через минуту.');
+    }
     throw new Error(AUTH_ERRORS[msg] || msg);
   }
   function unwrap({ data, error }) {
@@ -124,6 +129,20 @@ const api = (() => {
     async verifyCode(email, code) {
       unwrap(await sb.auth.verifyOtp({ email: email.trim().toLowerCase(), token: String(code).trim(), type: 'email' }));
       return myProfile();
+    },
+    /** Письмо со ссылкой на смену пароля; ссылка вернёт на login.html?reset=1 с сессией. */
+    async requestPasswordReset(email) {
+      const normalized = (email || '').trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) throw new Error('Введите корректный e-mail.');
+      const redirectTo = new URL('login.html?reset=1', window.location.href).href;
+      unwrap(await sb.auth.resetPasswordForEmail(normalized, { redirectTo }));
+      return normalized;
+    },
+    /** Новый пароль для сессии, открытой ссылкой из письма; после — выход, вход уже с новым паролем. */
+    async setNewPassword(password) {
+      if (!password || password.length < 6) throw new Error('Пароль должен быть не короче 6 символов.');
+      unwrap(await sb.auth.updateUser({ password }));
+      await sb.auth.signOut();
     },
     async submitRegistration({ password, lastName, firstName, middleName, className }) {
       if (!password || password.length < 6) throw new Error('Пароль должен быть не короче 6 символов.');

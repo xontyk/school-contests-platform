@@ -40,7 +40,38 @@
           <p class="error-text" id="login-error" role="alert"></p>
           <button type="submit" class="btn btn--block">Войти<svg class="icon"><use href="#icon-arrow-right"></use></svg></button>
         </form>
-        <p class="muted" style="margin-top:20px;">Нет аккаунта? <button class="back-link" type="button" id="to-register" style="display:inline;">Зарегистрируйтесь</button> — после одобрения учителем вход откроется.</p>
+        <button class="back-link" type="button" id="to-reset" style="margin-top:14px;">Забыли пароль?</button>
+        <p class="muted" style="margin-top:12px;">Нет аккаунта? <button class="back-link" type="button" id="to-register" style="display:inline;">Зарегистрируйтесь</button> — после одобрения учителем вход откроется.</p>
+      </section>
+
+      <!-- ===================== ВОССТАНОВЛЕНИЕ ПАРОЛЯ ===================== -->
+      <section class="auth-step" id="panel-reset-1">
+        <button class="back-link" type="button" data-to-login>&larr; Назад ко входу</button>
+        <h2>Восстановление пароля</h2>
+        <p class="lead">Укажите e-mail, с которым регистрировались. Пришлём письмо со ссылкой — по ней вы зададите новый пароль.</p>
+        <form id="reset-email-form">
+          <div class="field"><label for="reset-email">E-mail</label><input id="reset-email" type="email" autocomplete="email" required /></div>
+          <p class="error-text" id="reset-email-error" role="alert"></p>
+          <button type="submit" class="btn btn--block">Прислать ссылку<svg class="icon"><use href="#icon-mail"></use></svg></button>
+        </form>
+      </section>
+
+      <section class="auth-step" id="panel-reset-sent">
+        <svg class="sparkle" style="width:48px;height:48px;margin-bottom:16px;" aria-hidden="true"><use href="#icon-sparkle"></use></svg>
+        <h2>Проверьте почту</h2>
+        <p class="lead">Если аккаунт <strong id="reset-sent-email"></strong> существует, на него придёт письмо (загляните в «Спам»). Откройте ссылку из письма на этом же устройстве — сразу откроется форма нового пароля.</p>
+        <button class="btn btn--outline btn--block" type="button" data-to-login>К входу</button>
+      </section>
+
+      <section class="auth-step" id="panel-reset-2">
+        <h2>Новый пароль</h2>
+        <p class="lead">Для аккаунта <strong id="reset-account"></strong>. После сохранения войдите с новым паролем.</p>
+        <form id="reset-password-form">
+          <div class="field"><label for="reset-password">Новый пароль</label><input id="reset-password" type="password" minlength="6" autocomplete="new-password" required /></div>
+          <div class="field"><label for="reset-password-2">Повторите пароль</label><input id="reset-password-2" type="password" minlength="6" autocomplete="new-password" required /></div>
+          <p class="error-text" id="reset-password-error" role="alert"></p>
+          <button type="submit" class="btn btn--block">Сохранить пароль<svg class="icon"><use href="#icon-check"></use></svg></button>
+        </form>
       </section>
 
       <!-- ===================== РЕГИСТРАЦИЯ: шаг 1 ===================== -->

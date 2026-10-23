@@ -1,22 +1,30 @@
 /**
- * login.js — вход и регистрация в три шага: e-mail → код из письма →
- * пароль и ФИО. Код отправляет и проверяет Supabase Auth; после третьего
- * шага профиль ждёт решения учителя (status = pending).
+ * login.js — вход, регистрация в три шага (e-mail → код или ссылка из письма →
+ * пароль и ФИО) и восстановление пароля по ссылке из письма. Письма отправляет
+ * Supabase Auth; после регистрации профиль ждёт решения учителя (status = pending).
  */
 
 let REG_EMAIL = '';
 let RESEND_TIMER = null;
 const STEPS = ['panel-register-1', 'panel-register-2', 'panel-register-3', 'panel-register-done'];
 
-function showTab(tab) {
+// Supabase кладёт результат перехода по ссылке в hash и сразу его стирает — запоминаем заранее.
+const URL_HASH = new URLSearchParams(location.hash.slice(1));
+const URL_QUERY = new URLSearchParams(location.search);
+
+function showPanel(id) {
+  document.querySelectorAll('.auth-step').forEach((s) => s.classList.toggle('active', s.id === id));
+}
+function setTabs(tab) {
   document.getElementById('tab-login-btn').classList.toggle('active', tab === 'login');
   document.getElementById('tab-register-btn').classList.toggle('active', tab === 'register');
-  document.getElementById('panel-login').classList.toggle('active', tab === 'login');
-  STEPS.forEach((id, i) => document.getElementById(id).classList.toggle('active', tab === 'register' && i === 0));
+}
+function showTab(tab) {
+  setTabs(tab);
+  showPanel(tab === 'login' ? 'panel-login' : STEPS[0]);
 }
 function showStep(i) {
-  document.getElementById('panel-login').classList.remove('active');
-  STEPS.forEach((id, idx) => document.getElementById(id).classList.toggle('active', idx === i));
+  showPanel(STEPS[i]);
 }
 function showDone(title, text) {
   document.getElementById('done-title').textContent = title;
@@ -70,30 +78,85 @@ async function continueAfterConfirm(profile) {
     return showDone('Заявка уже на рассмотрении', 'Учитель ещё не принял решение. Как только одобрит — войдите по e-mail и паролю.');
   }
   REG_EMAIL = profile ? profile.email : REG_EMAIL;
-  document.getElementById('tab-register-btn').classList.add('active');
-  document.getElementById('tab-login-btn').classList.remove('active');
+  setTabs('register');
   showStep(2);
   document.getElementById('reg-lastname').focus();
 }
 
+function showResetRequest(email, error) {
+  setTabs('login');
+  showPanel('panel-reset-1');
+  const input = document.getElementById('reset-email');
+  if (email) input.value = email;
+  const err = document.getElementById('reset-email-error');
+  if (error) showError(err, error); else err.textContent = '';
+  input.focus();
+}
+
 (async function init() {
+  const isReset = URL_QUERY.get('reset') === '1' || URL_HASH.get('type') === 'recovery';
+  const linkError = URL_HASH.get('error_code') || URL_HASH.get('error');
   const profile = await api.auth.sessionProfile().catch(() => null);
+  if (URL_QUERY.toString() || location.hash) history.replaceState(null, '', 'login.html');
+
+  if (isReset) {
+    if (!profile) return showResetRequest('', 'Ссылка устарела или уже использована — запросите новое письмо.');
+    // по ссылке пришёл человек, не закончивший регистрацию, — у него ещё нет пароля и ФИО
+    if (!profile.registrationCompleted) return continueAfterConfirm(profile);
+    document.getElementById('reset-account').textContent = profile.email;
+    setTabs('login');
+    showPanel('panel-reset-2');
+    document.getElementById('reset-password').focus();
+    return;
+  }
   if (profile && profile.status === 'approved' && profile.registrationCompleted) {
     window.location.href = profile.role === 'teacher' ? 'teacher.html' : 'student.html';
     return;
   }
   if (profile) {
     // вернулись по ссылке из письма — e-mail подтверждён, продолжаем регистрацию
-    await continueAfterConfirm(profile);
-    history.replaceState(null, '', 'login.html');
-    return;
+    return continueAfterConfirm(profile);
   }
-  showTab(new URLSearchParams(location.search).get('tab') === 'register' ? 'register' : 'login');
+  if (linkError && URL_QUERY.get('confirmed') === '1') {
+    showTab('register');
+    return showError(document.getElementById('reg-email-error'), 'Ссылка из письма устарела или уже использована — запросите новую.');
+  }
+  showTab(URL_QUERY.get('tab') === 'register' ? 'register' : 'login');
 })();
 
 document.getElementById('tab-login-btn').addEventListener('click', () => showTab('login'));
 document.getElementById('tab-register-btn').addEventListener('click', () => showTab('register'));
 document.getElementById('to-register').addEventListener('click', () => showTab('register'));
+document.getElementById('to-reset').addEventListener('click', () => showResetRequest(document.getElementById('login-email').value.trim()));
+document.querySelectorAll('[data-to-login]').forEach((b) => b.addEventListener('click', () => showTab('login')));
+
+// ---------- восстановление пароля ----------
+document.getElementById('reset-email-form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const err = document.getElementById('reset-email-error');
+  err.textContent = '';
+  withBusy(e, async () => {
+    try {
+      const email = await api.auth.requestPasswordReset(document.getElementById('reset-email').value);
+      document.getElementById('reset-sent-email').textContent = email;
+      showPanel('panel-reset-sent');
+    } catch (ex) { showError(err, ex.message); }
+  });
+});
+
+document.getElementById('reset-password-form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const err = document.getElementById('reset-password-error');
+  err.textContent = '';
+  const password = document.getElementById('reset-password').value;
+  if (password !== document.getElementById('reset-password-2').value) { showError(err, 'Пароли не совпадают.'); return; }
+  withBusy(e, async () => {
+    try {
+      await api.auth.setNewPassword(password);
+      showDone('Пароль изменён', 'Теперь войдите по e-mail и новому паролю на вкладке «Вход».');
+    } catch (ex) { showError(err, ex.message); }
+  });
+});
 
 // ---------- вход ----------
 document.getElementById('login-form').addEventListener('submit', (e) => {
