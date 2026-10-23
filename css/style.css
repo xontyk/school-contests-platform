@@ -147,7 +147,6 @@ a { color: inherit; }
 .hero::before { content: ""; position: absolute; inset: 0; background-image: radial-gradient(1.5px 1.5px at 8% 25%, #fff, transparent), radial-gradient(1.5px 1.5px at 85% 15%, #fff, transparent), radial-gradient(1px 1px at 25% 75%, #fff, transparent), radial-gradient(1px 1px at 65% 82%, #fff, transparent), radial-gradient(2px 2px at 95% 55%, #fff, transparent), radial-gradient(1px 1px at 40% 40%, #fff, transparent), radial-gradient(1.5px 1.5px at 12% 88%, #fff, transparent), radial-gradient(1px 1px at 55% 10%, #fff, transparent), radial-gradient(1.5px 1.5px at 75% 65%, #fff, transparent); opacity: .55; animation: twinkle 4s ease-in-out infinite; }
 @keyframes twinkle { 0%, 100% { opacity: .35; } 50% { opacity: .7; } }
 .hero__content { position: relative; text-align: center; max-width: 720px; margin: 0 auto; }
-.hero__kicker { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.18); padding: 7px 16px; border-radius: 999px; font-size: 12.5px; font-weight: 700; letter-spacing: .03em; color: var(--star); margin-bottom: 22px; }
 .hero h1 { font-size: clamp(32px, 5vw, 52px); line-height: 1.12; margin: 0 0 18px; }
 .hero h1 .accent { color: var(--star); }
 .hero p.lead { font-size: 17px; line-height: 1.6; color: rgba(255,255,255,.78); margin: 0 0 32px; }
@@ -268,4 +267,10 @@ table.data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
   .navbar .container { flex-direction: column; align-items: flex-start; }
   .field-row { flex-direction: column; gap: 0; }
   .hero__stats { gap: 22px; }
+}
+
+/* The 760-unit SVG scales down below ~820px, shrinking in-map cluster labels
+   under 11px; the legend above already names every cluster by colour. */
+@media (max-width: 820px) {
+  .constellation__label { display: none; }
 }

@@ -1,181 +1,236 @@
 ---
-name: Платформа школьных конкурсов
-description: A velvet-and-brass trophy display case for tracking school-contest progress and diplomas.
+name: Портал достижений лицея
+description: A night-sky observatory where every verified lyceum achievement lights a star on the student's personal constellation map.
 colors:
-  velvet: "#16302a"
-  velvet-light: "#203f36"
-  velvet-deeper: "#0e221c"
-  brass: "#c9a227"
-  brass-bright: "#e8c468"
-  brass-dim: "rgba(201, 162, 39, 0.38)"
-  cream: "#eef0e8"
-  cream-deep: "#e1e6d8"
-  ink: "#20251f"
-  ink-muted: "#52605a"
-  border: "#d7dcce"
-  danger: "#a3291f"
-  danger-bg: "#f7e6e3"
+  space-deep: "#090d1f"
+  space: "#121a3a"
+  space-light: "#1c2757"
+  star: "#ffcf6e"
+  brand: "#7c6fff"
+  brand-bright: "#9d93ff"
+  brand-ink: "#4c3fd9"
+  subj-physics: "#4fc3f7"
+  subj-math: "#ff9f5e"
+  subj-cs: "#4de8c0"
+  state-approved: "#3ddc84"
+  state-pending: "#ffcf6e"
+  state-rejected: "#d9304f"
+  surface: "#f5f7fc"
+  surface-deep: "#e9edf8"
+  card: "#ffffff"
+  ink: "#141a33"
+  ink-muted: "#5b6481"
+  border: "#dbe0f0"
 typography:
-  display:
-    fontFamily: "Forum, Georgia, serif"
+  display-hero:
+    fontFamily: "Unbounded, Segoe UI, sans-serif"
+    fontSize: "clamp(32px, 5vw, 52px)"
+    fontWeight: 600
+    lineHeight: 1.12
+    letterSpacing: "-0.01em"
+  display-section:
+    fontFamily: "Unbounded, Segoe UI, sans-serif"
     fontSize: "21px"
-    fontWeight: 400
+    fontWeight: 600
     lineHeight: 1.3
-    letterSpacing: "normal"
-  label:
-    fontFamily: "Forum, Georgia, serif"
-    fontSize: "11px"
-    fontWeight: 400
-    letterSpacing: "0.08em"
-    textTransform: "uppercase"
+  numeral:
+    fontFamily: "Unbounded, Segoe UI, sans-serif"
+    fontSize: "24px"
+    fontWeight: 600
+    fontFeature: "tabular-nums"
   body:
     fontFamily: "Manrope, Segoe UI, sans-serif"
     fontSize: "14px"
     fontWeight: 500
-    lineHeight: 1.5
+    lineHeight: 1.55
+  label:
+    fontFamily: "Manrope, Segoe UI, sans-serif"
+    fontSize: "11.5px"
+    fontWeight: 700
+    letterSpacing: "0.04em"
+    textTransform: "uppercase"
 rounded:
-  sm: "8px"
-  md: "12px"
+  xs: "6px"
+  sm: "9px"
+  md: "14px"
+  lg: "20px"
   pill: "999px"
 spacing:
-  sm: "8px"
+  sm: "10px"
   md: "16px"
   lg: "22px"
+  section: "64px"
 components:
   button-primary:
-    backgroundColor: "{colors.brass-bright}"
-    textColor: "{colors.velvet-deeper}"
+    backgroundColor: "{colors.brand-ink}"
+    textColor: "#ffffff"
     rounded: "{rounded.sm}"
     padding: "10px 18px"
     typography: "{typography.body}"
+  button-star:
+    backgroundColor: "{colors.star}"
+    textColor: "{colors.space-deep}"
+    rounded: "{rounded.sm}"
+    padding: "10px 18px"
   button-ghost:
-    backgroundColor: "{colors.cream}"
+    backgroundColor: "{colors.card}"
     textColor: "{colors.ink}"
     rounded: "{rounded.sm}"
     padding: "10px 18px"
+  button-danger:
+    backgroundColor: "{colors.state-rejected}"
+    textColor: "#ffffff"
+    rounded: "{rounded.sm}"
   card:
-    backgroundColor: "#ffffff"
+    backgroundColor: "{colors.card}"
     rounded: "{rounded.md}"
     padding: "22px"
-  badge:
-    rounded: "6px"
-    padding: "4px 10px"
-    width: "108px"
+  badge-status:
+    rounded: "{rounded.xs}"
+    typography: "{typography.label}"
+  subject-tag:
+    rounded: "{rounded.pill}"
+  constellation-panel:
+    backgroundColor: "{colors.space-deep}"
+    rounded: "{rounded.md}"
 ---
 
-# Design System: Платформа школьных конкурсов
+# Портал достижений лицея — design system
 
 ## Overview
 
-**Creative North Star: "The Trophy Display Case"**
+The world is a **night-sky observatory**. A lyceum student's verified
+achievements are stars; the three subjects are constellations. Deep space
+holds the shell (navbar, landing hero, auth page, the constellation panel);
+the working surfaces where people read tables and fill forms stay on a cool,
+light "night-sky paper" (`surface`), never cream. Colour does jobs, not
+decoration: one gold for stars and achievement CTAs, one indigo for interface
+actions, three disciplined subject colours, three state colours.
 
-A dark-velvet museum vitrine holds the frame — header, navigation, and progress rail — while brass gilding marks everything earned or active. The thesis is explicit in the shipped build: student progress reads as trophies on a shelf, not an abstract percentage bar or a generic grey SaaS dashboard. Working surfaces (tables, forms, participation cards) stay deliberately outside the vitrine: cream and graphite, flat and legible, because the display case is for honors, not for data entry.
-
-The palette was corrected mid-build: a warm-cream default was flagged as the generic AI-cliché palette and replaced with a cooler, deliberately green-and-brass "museum stone" system. The display face was corrected too — Cinzel was the original plan, but it ships with no Cyrillic glyphs and was silently falling back to Georgia for Russian text. Forum replaced it: same engraved-capital, gravure-on-brass character, with real Cyrillic coverage, self-hosted at weight 400 only.
-
-**Key Characteristics:**
-- Velvet-green display case (header, nav, trophy shelf) vs. cream-and-white working surfaces — the vitrine never bleeds into data.
-- Brass/gold gradient marks earned, active, or current state everywhere; its rarity on any given screen is the point.
-- One hand-authored line-icon sprite, no emoji, no icon font — replacing emoji placeholders (🏆/🛠) that existed before this system.
-- Forum (display, weight 400 only) over Manrope (body/UI, 500–800), both self-hosted, zero CDN dependency.
+Platform: static web (HTML/CSS/vanilla JS). Modes: `index.html` is Persuade
+(landing); `student.html` and `teacher.html` are Operate; `login.html` is a
+Persuade-adjacent entrance sharing the space world.
 
 ## Colors
 
-The palette is two cool, saturated poles — velvet green and brass gold — anchoring a nearly achromatic cream/graphite field for everything that isn't a trophy.
-
-### Primary
-- **Brass** (`#c9a227`) and **Brass Bright** (`#e8c468`): the earned/active/current signal. Drives primary buttons, earned trophy fills, the points plaque, winner badges, active nav pill, focus rings. Always as a gradient (`linear-gradient(180deg/145deg, brass-bright, brass)`), never flat.
-- **Brass Dim** (`rgba(201, 162, 39, 0.38)`): the same accent desaturated for structure — dashed outlines on unearned trophy slots, hairline shelf armature, dashed drop-zone borders, scrollbar thumb.
-
-### Secondary
-- **Velvet** (`#16302a`), **Velvet Light** (`#203f36`), **Velvet Deeper** (`#0e221c`): the display-case material. Navbar, trophy shelf, login background, modal overlay, toast background. Always as a vertical gradient between two of the three steps, never a flat fill.
-
-### Neutral
-- **Cream** (`#eef0e8`) / **Cream Deep** (`#e1e6d8`): page background and secondary surface fill (hover rows, hint boxes, file-drop zone).
-- **Ink** (`#20251f`) / **Ink Muted** (`#52605a`): body text / secondary text (meta, labels, subtitles).
-- **Border** (`#d7dcce`): the one hairline border color for cards, inputs, table rules.
-- **Danger** (`#a3291f`) on **Danger Bg** (`#f7e6e3`): destructive actions and error text only.
-
-### Named Rules
-**The Vitrine Doesn't Bleed Rule.** Velvet and brass are reserved for the display case (nav, trophy shelf, login shell, badges-as-trophies). Tables, forms, and contest cards stay on cream/white/graphite. A velvet gradient on a data table or form card is drift, not reinforcement.
+- **Space** (`space-deep` → `space` → `space-light`): the night sky. Only for
+  the navbar, the landing hero and footer CTA, the auth background, and the
+  constellation panel. Always a vertical gradient from lighter top to deeper
+  bottom, with soft radial indigo/cyan glows layered on top.
+- **Star** (`star`): achievement gold. Primary CTAs that start or advance the
+  "light a star" story (Регистрация, Войти, Добавить достижение, Одобрить),
+  hero accent words, rank-1 medal, the "pending" state (a star not yet lit).
+- **Brand** (`brand`, `brand-bright`): indigo accent for icons, focus rings,
+  borders, large numerals. **`brand-ink`** is the same hue darkened for any
+  *text* or *text-bearing background* below 18.66px bold / 24px regular — it
+  measures 6.95:1 against white, where `brand` only reaches 3.77:1.
+- **Subjects**: physics `subj-physics` (cyan), math `subj-math` (orange),
+  computer science `subj-cs` (mint). Used identically on subject tags, stat
+  plaques and constellation clusters — never repurposed for anything else.
+  Projects/volunteering without a subject use a neutral lavender-grey `#9aa3c7`.
+- **States**: `state-approved` green, `state-pending` = `star`,
+  `state-rejected` `#d9304f` (darkened from an earlier `#ef5a72` so white text
+  on it passes AA at 4.68:1). Status badges use a ~15% tint of the state colour
+  as background with a darker same-hue text.
+- **Neutrals**: `surface` page ground, `surface-deep` for alternate sections
+  and hover rows, `card` white, `ink` / `ink-muted` text, `border` hairlines.
 
 ## Typography
 
-**Display Font:** Forum (with Georgia, serif fallback)
-**Body Font:** Manrope (with Segoe UI, sans-serif fallback)
+- **Unbounded** (self-hosted variable font, `font-weight: 200 900`) — the
+  observatory signage voice: h1–h3, the navbar wordmark, stat numerals, step
+  numbers, the demo verification code. Weight 600 by default.
+- **Manrope** (self-hosted variable font, `font-weight: 200 800`) — all
+  interface and body text. 500 body, 600–700 controls, 700 uppercase labels.
+- Both families were checked for real Cyrillic coverage against the live
+  Google Fonts CSS2 response before adoption (a previous world in this repo
+  shipped a display face with no Cyrillic, silently falling back to Georgia).
+- Fonts are served from `assets/fonts/` — one `.woff2` per Unicode subset
+  (cyrillic, cyrillic-ext, latin) per family. Declare weights as a **range**,
+  never as discrete values: Google serves the same variable file for every
+  discrete weight, and discrete `font-weight` declarations collapse all bolds
+  to the default instance.
+- Numerals in tables, stats and points use `tabular-nums`.
 
-**Character:** Forum is a single-weight engraved capital face — used exactly like lettering stamped into a brass plate, never for body text and never faux-bolded (the CSS comment is explicit: "Forum ships one weight; browser-bold would fake-embolden"). Manrope carries every working-surface weight (500/600/700/800) and never appears in all-caps display roles.
+## Layout & spacing
 
-### Hierarchy
-- **Display** (400, 17–21px, Forum): `h1`/`h2`/`h3`, navbar brand wordmark, modal titles, level badge, points-plaque value, stat-plaque numeral. Section titles step down to 21px.
-- **Label** (400 Forum or 700 Manrope depending on context, 10.5–12px, uppercase, 0.04–0.08em tracking): trophy-slot labels, points-plaque label, stat-plaque caption, field labels, table headers, badges.
-- **Body** (500–600, 13–14px, Manrope): paragraph text, nav links, form inputs, table cells.
-- **Emphasis** (700–800, 14–15.5px, Manrope): buttons, contest-card titles, navbar-user name.
+Container max 1160px with 20px gutters. Sections breathe at 64px on the
+landing, 30px inside the apps. Card padding 22px. Below 640px the navbar
+stacks and paired form fields collapse to one column; tables scroll
+horizontally inside `.table-wrap` instead of squashing.
 
-### Named Rules
-**The One-Weight Display Rule.** Forum ships only at 400. Never request bold Forum; let Manrope carry all weight variation.
+## Shapes & depth
 
-## Layout
-
-Single-column, container-constrained layout (`max-width: 1120px`, 20px side padding) shared by all three surfaces. The navbar is sticky, full-width, velvet, with a flex-wrap row (brand, links, user). Dashboard content below the navbar is single-column sections (`.section`, 30px vertical rhythm) with an internal grid only for contest cards (`repeat(auto-fill, minmax(260px, 1fr))`, 16px gap) and a flex row for the three stat plaques (`flex: 1 1 150px`, 14px gap, wraps on narrow viewports). One breakpoint, `max-width: 640px`: navbar stacks vertically, trophy-shelf footer stacks, points-plaque drops its min-width, trophy labels shrink to 9px.
-
-## Elevation & Depth
-
-Hybrid: velvet surfaces are rendered with gradient + glow rather than drop shadow (the trophy shelf, navbar, login shell use `--shadow-raised`, a soft diffuse shadow, not a hard offset); cream/white surfaces use a quieter two-layer ambient shadow (`--shadow-card`) for separation, not hierarchy. Shadows never carry a sharp offset — the system has no neobrutalist hard-shadow vocabulary.
-
-### Shadow Vocabulary
-- **Card** (`--shadow-card`: `0 1px 2px rgba(22,48,41,.06), 0 8px 20px -10px rgba(22,48,41,.18)`): default lift for white/cream cards (contest cards, stat plaques, modal content at rest).
-- **Raised** (`--shadow-raised`: `0 10px 30px -12px rgba(14,34,28,.35)`): navbar, trophy shelf, login card, modal shell, toast — the velvet/featured-surface shadow.
-- **Spotlit glow** (`.trophy-slot--current`, `glow-pulse` keyframe, `0 0 0 5px rgba(232,196,104,.28), 0 0 18px rgba(232,196,104,.55)` pulsing to `0 0 0 8px / 0 0 26px`): the current-level trophy only. This is a diegetic device — the display case's own spotlight on the active exhibit — not a generic glow effect, and the one dark-glow instance the detector was told to ignore because the world itself calls for it.
-
-### Named Rules
-**The No Hard Offset Rule.** Every shadow in this system is soft and diffuse (negative spread, blurred). A crisp, zero-blur offset shadow is a different world's device (neobrutalism) and has no place here, with the single named exception of the spotlit-trophy glow above, which is light, not a card shadow.
-
-## Shapes
-
-Two radius steps: `--radius-sm` (8px) for small controls (buttons, inputs, badges, file-drop), `--radius` (12px) for cards and the trophy shelf. Pills (`999px`) mark state chips only — nav active link, level badge. The login crest and avatar are full circles. Corners read as a light bevel (brass-frame feel per the direction contract) rather than a sharp or heavily rounded silhouette; no surface in the build uses a hard square corner.
+Radii: 6px badges, 9px buttons and inputs, 14px cards and panels, 16–20px
+modal and auth card, pills for tabs/tags/avatars. Depth is soft and offset:
+`--shadow-card` (1px + 10px/24px blur, slight y-offset) on light surfaces,
+`--shadow-raised` for the navbar, panels, modals and toasts. No hard offset
+shadows, no glass.
 
 ## Components
 
-### Buttons
-- **Shape:** 8px radius (`--radius-sm`).
-- **Primary:** brass gradient fill (`linear-gradient(180deg, brass-bright, brass)`), velvet-deeper text, inset top highlight + soft brass drop shadow, 10px/18px padding.
-- **Hover / Focus:** `filter: brightness(1.06)` on hover, 1px translateY press on active; focus-visible gets a 2px brass outline with 2px offset system-wide.
-- **Ghost:** cream fill, ink text, 1px border; on the navbar specifically, ghost swaps to translucent white-on-velvet (`rgba(250,247,240,.08)`) since cream-on-velvet would invert correctly but look like a hole in the case.
-- **Danger:** solid `--danger` fill, white text, for destructive admin actions only.
+- **Navbar**: space gradient, Unbounded wordmark with the orbit icon in
+  `star`, pill links (active = `brand-ink` fill, white text).
+- **Buttons**: `.btn` (brand-ink), `.btn--star` (gold, dark text — story
+  actions), `.btn--ghost` (white, bordered), `.btn--danger` (rejected red).
+- **Badges & tags**: fixed-min-width uppercase status badges; rounded subject
+  pills tinted with their subject colour.
+- **Tables**: uppercase muted headers, hairline rows, hover `surface-deep`.
+  Rating rows 1–3 carry gold/silver/bronze rank pills; the viewer's own row
+  is tinted indigo and marked «(вы)».
+- **Stat plaques**: white cards with an Unbounded numeral coloured by subject
+  (total uses `brand`).
+- **Modals**: white, 16px radius, indigo hairline, space-tinted scrim.
+- **Toasts**: space background, gold star icon; error variant in rejected red.
+- **Icons**: one hand-authored inline SVG sprite (`js/common.js`), 24×24,
+  1.6 stroke, round caps. No emoji as icons.
+- **Feature cards / auth heading**: icon sits inline beside the heading,
+  never as a tile stacked above it.
 
-### Badges
-- **Style:** fixed minimum width (108px) regardless of label length — status is a plaque, not a tag, so it doesn't reflow the row. Six status variants (upcoming/active/finished/registered/in_progress/completed) in muted tonal pairs; `--winner` alone gets the full brass gradient treatment, the only badge promoted to trophy-grade color.
+## Signature: the constellation map
 
-### Cards / Containers
-- **Corner Style:** 12px radius.
-- **Background:** white (contest cards, stat plaques) or cream (login card, modal) — never velvet.
-- **Shadow Strategy:** `--shadow-card` at rest, `--shadow-raised` + 2px lift on hover for interactive cards (contest cards).
-- **Border:** 1px `var(--border)` hairline on every card.
-- **Internal Padding:** 16–22px depending on density (stat plaques tighter, cards looser).
+`js/constellation.js` renders only **approved** achievements as stars on a
+760×300 SVG inside the space panel on student.html → «Моя карта». Four
+clusters (physics, math, cs, projects & volunteering) sit left to right;
+each star's radius grows with points, a faint same-colour halo surrounds it,
+and stars within a cluster are joined by a 35%-opacity polyline. Positions
+are derived from a hash of the achievement id, so the map never jumps
+between renders. Each star twinkles (`star-twinkle`, opacity .88↔1 with a
+slight brightness lift, 3.2s) with a per-star delay from the same hash, so
+stars never pulse in unison. Cluster labels are drawn in-SVG on wide
+screens and hidden below 820px, where the legend above the map carries the
+cluster names. The device lives only on this tab — dashboards elsewhere stay
+standard tables and forms.
 
-### Inputs / Fields
-- **Style:** white fill, 1px border, 8px radius, 11–13px padding.
-- **Focus:** border shifts to brass, plus a 3px brass-dim glow ring (`box-shadow: 0 0 0 3px var(--brass-dim)`) — the same accent family as the trophy glow, scaled down for form controls.
+## Motion
 
-### Navigation
-- Velvet sticky header, Forum-set uppercase brand with a brass trophy icon. Links are pill-shaped; the active tab fills with the brass gradient (velvet-deeper text), inactive links are translucent cream text, hover adds a faint white wash. Mobile: the navbar container wraps to a vertical stack below 640px.
-
-### Trophy Shelf (signature component)
-The `.trophy-shelf` is the system's one unmissable move: a velvet card containing `.trophy-shelf__rail`, a flex row of `.trophy-slot` elements rendered by `renderTrophyShelf()` in js/student.js, one per level. Unearned slots are dashed brass-dim circle outlines; earned slots fill solid brass-gradient; the current slot additionally runs the `glow-pulse` animation (2.4s, infinite) — the single spotlit exhibit in the case. Slots stagger in with a `slot-rise` entrance (70ms stagger per index). Beneath the rail, `.trophy-shelf__footer` holds the level-badge pill, an in-level progress bar, and the `.points-plaque` — a brass nameplate mounted flush inside the case (inset highlights only, no outer drop shadow — it reads as bolted to the shelf, not stacked on top of it). A faint repeating brass hairline grid (`repeating-linear-gradient`) sits behind the rail as the shelf's tier armature, with a solid brass edge line (`.trophy-shelf__rail::after`) as the shelf's physical front lip. Below the shelf, three `.stat-plaque` cards (fixed-size, cream-bordered, Forum numerals) report contest/win/diploma counts — kept on white ground, outside the vitrine, per the Vitrine Doesn't Bleed Rule.
+One authored vocabulary, all `cubic-bezier(0.16, 1, 0.3, 1)`: the landing and
+auth starfield `twinkle` (wide amplitude, background dust), the constellation
+`star-twinkle` (narrow amplitude, stays legible), the auth card's rise-in, and
+short hover/press transitions on controls. Nothing is hidden by default.
 
 ## Do's and Don'ts
 
-### Do:
-- **Do** gate every velvet-and-brass treatment to the display case: navbar, trophy shelf, login shell, and the brass-gradient "winner"/active states. The rest of the UI stays cream/white/graphite.
-- **Do** use the brass gradient (never a flat brass fill) for anything earned, active, current, or primary-actionable.
-- **Do** keep Forum at 400 weight only, reserved for display/label roles; keep Manrope for everything a user reads at length.
-- **Do** keep shadows soft and diffuse (`--shadow-card` / `--shadow-raised`); the spotlit trophy glow is the one named exception, scoped to the current-level trophy.
-- **Do** keep status badges and the points/stat plaques fixed-width so status changes never reflow their row.
+- **Do** keep space colours on the shell and the constellation only; data
+  surfaces stay light.
+- **Do** use `brand-ink`, not `brand`, for small text or text-bearing fills.
+- **Do** keep subject colours exclusive to their subject.
+- **Don't** put an eyebrow/kicker label above a heading — the hero h1
+  carries the subject list itself.
+- **Don't** stack an icon tile above a heading; put the icon inline.
+- **Don't** declare discrete font weights for the variable fonts.
+- **Don't** fake constellation density in the renderer; richness comes from
+  real approved data.
 
-### Don't:
-- **Don't** introduce a hard-offset, zero-blur shadow anywhere outside the trophy glow exception — this is not a neobrutalist world.
-- **Don't** reintroduce emoji icons (🏆, 🛠) or any icon font; all icons are line-stroke SVGs drawn from the single `ICON_SPRITE` in js/common.js.
-- **Don't** bold or synthetically weight Forum; request Manrope at a heavier weight instead.
-- **Don't** let the velvet/brass vitrine palette leak into tables, forms, or contest-card bodies — those stay on the neutral cream/graphite surface by design.
-- **Don't** treat the repeating brass hairline grid behind the trophy rail as a decorative stripe pattern to reuse elsewhere; it is the shelf's own tier armature, scoped to `.trophy-shelf__rail` only (an advisory-only detector finding on this exact use was reviewed and accepted as the literal shelf structure, not cleared for reuse as a general background texture).
+## Documented detector exceptions
+
+Recorded in `.impeccable/config.json` with reasons:
+
+- `low-contrast` on `*.html` — confirmed false positives: the detector samples
+  an uncomposited gradient stop on the layered space backgrounds (rendered text
+  is white/gold on dark navy), and reports a `#090d1f`-on-`#4c3fd9` pairing
+  that does not exist in the live DOM. Real contrast failures found in the same
+  pass were fixed, not ignored (`brand-ink`, darker `state-rejected`).
+- `dark-glow` on `index.html` only — the gold `.btn--star` shadow reads as a
+  glow solely where the button sits directly on the night-sky hero; that glow
+  is the product's "star lights up" metaphor.

@@ -74,7 +74,7 @@ function renderConstellation(rootEl, achievements) {
       svg += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(r + 4).toFixed(1)}" fill="${cluster.color}" opacity="0.14"/>`;
     });
 
-    svg += `<text x="${baseX.toFixed(1)}" y="${H - 14}" text-anchor="middle" fill="rgba(255,255,255,.55)" font-size="11" font-family="Manrope, sans-serif" font-weight="700" letter-spacing="0.03em">${cluster.label.toUpperCase()}</text>`;
+    svg += `<text class="constellation__label" x="${baseX.toFixed(1)}" y="${H - 14}" text-anchor="middle" fill="rgba(255,255,255,.55)" font-size="11" font-family="Manrope, sans-serif" font-weight="700" letter-spacing="0.03em">${cluster.label.toUpperCase()}</text>`;
   });
 
   svg += '</svg>';
