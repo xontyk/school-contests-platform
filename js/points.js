@@ -1,10 +1,10 @@
 /**
- * points.js — прозрачная таблица начисления баллов.
+ * points.js — прозрачная таблица начисления баллов (копия для браузера).
  *
- * Логика вынесена отдельно от api.js, чтобы форма добавления достижения
- * могла показывать ученику баллы ДО отправки (прозрачность системы —
- * продуктовый принцип из PRODUCT.md), а учитель видел ту же цифру при
- * проверке. Обоснование категорий — в README → «Система баллов».
+ * Источник правды — функция calc_points() в supabase/schema.sql: при
+ * сохранении база пересчитывает баллы сама, поэтому подмена числа в
+ * браузере ничего не даёт. Эта копия нужна только для мгновенного
+ * предпросмотра в форме. Обоснование категорий — README → «Система баллов».
  */
 
 const OLYMPIAD_LEVELS = {
@@ -29,6 +29,33 @@ const CATEGORY_LABELS = { academic: 'Академическое', olympiad: 'О�
 const ACADEMIC_BASE_POINTS = 5;
 const VOLUNTEER_POINTS_PER_2H = 1;
 const VOLUNTEER_MAX_POINTS = 10;
+
+const QUARTERS = ['I', 'II', 'III', 'IV'];
+
+/** Учебный год и четверть по дате: сен–окт I, ноя–дек II, янв–мар III, апр–авг IV. */
+function periodOf(dateStr) {
+  const d = dateStr ? new Date(dateStr) : new Date();
+  const m = d.getMonth() + 1;
+  const y = d.getFullYear();
+  const year = m >= 9 ? `${y}/${y + 1}` : `${y - 1}/${y}`;
+  const q = m >= 9 && m <= 10 ? 'I' : m >= 11 ? 'II' : m <= 3 ? 'III' : 'IV';
+  return `${year}, ${q} четверть`;
+}
+
+/** Текущий и прошлый учебный год: для фильтров рейтинга и выбора периода. */
+function periodOptions() {
+  const current = periodOf().split(',')[0];
+  const [a] = current.split('/').map(Number);
+  const years = [current, `${a - 1}/${a}`];
+  return years.flatMap((y) => [{ value: y, label: `${y} — весь год` }, ...QUARTERS.map((q) => ({ value: `${y}, ${q} четверть`, label: `${y}, ${q} четверть` }))]);
+}
+
+/** Заполняет <select> уровней для олимпиады или проекта. */
+function fillLevelOptions(select, category) {
+  const levels = category === 'olympiad' ? OLYMPIAD_LEVELS : category === 'project' ? PROJECT_LEVELS : null;
+  select.innerHTML = levels ? Object.entries(levels).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('') : '';
+  return Boolean(levels);
+}
 
 /** Считает баллы по тем же правилам, что показаны ученику в форме. */
 function calcAchievementPoints({ category, level, place, hours }) {

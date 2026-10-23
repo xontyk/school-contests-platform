@@ -1,300 +1,306 @@
 /**
- * api.js — эмулированный API-слой.
+ * api.js — API-слой поверх Supabase (PostgreSQL + Auth).
  *
- * Контракт (имена методов, Promise + задержка, форма ответа) повторяет
- * то, как выглядел бы реальный fetch()-клиент к REST API — при переходе
- * на настоящий бэкенд меняется только реализация внутри каждого метода,
- * код страниц (login.js, student.js, teacher.js) не меняется.
+ * Страницы (login.js, student.js, teacher.js) работают только через
+ * объект `api` и ничего не знают о Supabase напрямую. Всё, что меняет
+ * баллы, вызывает RPC-функции из supabase/schema.sql: они проверяют
+ * роль учителя на стороне базы и пишут историю в award_log, поэтому
+ * обойти правила из браузера нельзя.
  *
- * Разделы: api.auth (вход + регистрация в 3 шага), api.registrations
- * (очередь заявок на регистрацию для учителя), api.users, api.achievements
- * (CRUD + верификация), api.rating (агрегация баллов), api.reports (CSV).
+ * Разделы: auth, registrations, users, contests, participations,
+ * achievements, rating, stats, telegram, reports.
  */
 
 const api = (() => {
-  const LATENCY_MS = 150;
+  // ---------- перевод ошибок и строк базы в объекты интерфейса ----------
 
-  function ok(data) {
-    return new Promise((resolve) => setTimeout(() => resolve(data), LATENCY_MS));
+  const AUTH_ERRORS = {
+    'Invalid login credentials': 'Неверный e-mail или пароль.',
+    'Token has expired or is invalid': 'Неверный или устаревший код. Запросите новый.',
+    'Email rate limit exceeded': 'Слишком много писем за короткое время. Подождите и попробуйте снова.',
+    'email rate limit exceeded': 'Слишком много писем за короткое время. Подождите и попробуйте снова.',
+    'Password should be at least 6 characters.': 'Пароль должен быть не короче 6 символов.',
+  };
+
+  function fail(error) {
+    const msg = (error && error.message) || String(error);
+    throw new Error(AUTH_ERRORS[msg] || msg);
   }
-  function fail(message) {
-    return new Promise((_, reject) => setTimeout(() => reject(new Error(message)), LATENCY_MS));
+  function unwrap({ data, error }) {
+    if (error) fail(error);
+    return data;
   }
 
-  // -------------------- auth: вход --------------------------------------
-  const SESSION_KEY = 'lic_session_user_id';
-  const CODE_KEY = 'lic_pending_registration_code';
-
-  function fullName(u) {
-    return [u.lastName, u.firstName, u.middleName].filter(Boolean).join(' ');
+  function fullName(p) {
+    return [p.last_name, p.first_name, p.middle_name].filter(Boolean).join(' ');
+  }
+  function toProfile(r) {
+    if (!r) return null;
+    return {
+      id: r.id, email: r.email, role: r.role, status: r.status,
+      lastName: r.last_name, firstName: r.first_name, middleName: r.middle_name,
+      fullName: fullName(r), className: r.class_name,
+      registrationCompleted: r.registration_completed,
+      rejectionReason: r.rejection_reason, createdAt: r.created_at,
+      telegramLinked: r.telegram_chat_id != null,
+    };
+  }
+  function toAchievement(r) {
+    return {
+      id: r.id, userId: r.user_id, category: r.category, subject: r.subject,
+      title: r.title, description: r.description, level: r.level, place: r.place,
+      hours: r.hours, period: r.period, date: r.date, proofUrl: r.proof_url,
+      points: r.points, status: r.status, teacherComment: r.teacher_comment,
+      source: r.source, participationId: r.participation_id, createdAt: r.created_at,
+      student: r.profiles ? toProfile(r.profiles) : null,
+    };
+  }
+  function toContest(r) {
+    return {
+      id: r.id, title: r.title, description: r.description, category: r.category,
+      subject: r.subject, level: r.level, period: r.period,
+      startDate: r.start_date, endDate: r.end_date, status: r.status,
+    };
+  }
+  function toParticipation(r) {
+    return {
+      id: r.id, contestId: r.contest_id, userId: r.user_id, result: r.result,
+      achievementId: r.achievement_id, statusReason: r.status_reason, updatedAt: r.updated_at,
+      contest: r.contests ? toContest(r.contests) : null,
+      student: r.profiles ? toProfile(r.profiles) : null,
+    };
   }
 
+  async function myId() {
+    const { data } = await sb.auth.getUser();
+    return data.user ? data.user.id : null;
+  }
+  async function myProfile() {
+    const id = await myId();
+    if (!id) return null;
+    return toProfile(unwrap(await sb.from('profiles').select('*').eq('id', id).maybeSingle()));
+  }
+
+  // -------------------- auth --------------------------------------------
   const auth = {
     async login(email, password) {
-      const normalizedEmail = (email || '').trim().toLowerCase();
-      const user = DB.getAll(DB.KEYS.users).find(
-        (u) => u.email.toLowerCase() === normalizedEmail && u.password === password
-      );
-      if (user) {
-        localStorage.setItem(SESSION_KEY, user.id);
-        const { password: _pw, ...safe } = user;
-        return ok(safe);
+      unwrap(await sb.auth.signInWithPassword({ email: email.trim().toLowerCase(), password }));
+      const profile = await myProfile();
+      if (!profile || profile.status === 'pending') {
+        await sb.auth.signOut();
+        throw new Error('Ваша заявка ещё на рассмотрении у учителя.');
       }
-      const pendingReq = DB.getAll(DB.KEYS.registrations).find(
-        (r) => r.email.toLowerCase() === normalizedEmail && r.status === 'pending'
-      );
-      if (pendingReq) return fail('Ваша заявка на регистрацию ещё на рассмотрении у учителя.');
-      const rejectedReq = DB.getAll(DB.KEYS.registrations).find(
-        (r) => r.email.toLowerCase() === normalizedEmail && r.status === 'rejected'
-      );
-      if (rejectedReq) return fail(`Заявка отклонена: ${rejectedReq.rejectionReason || 'без указания причины'}`);
-      return fail('Неверный e-mail или пароль.');
+      if (profile.status === 'rejected') {
+        await sb.auth.signOut();
+        throw new Error(`Заявка отклонена: ${profile.rejectionReason || 'без указания причины'}`);
+      }
+      return profile;
     },
     async logout() {
-      localStorage.removeItem(SESSION_KEY);
-      return ok(true);
+      await sb.auth.signOut();
     },
+    /** Текущий пользователь, только если его заявка одобрена. */
     async currentUser() {
-      const id = localStorage.getItem(SESSION_KEY);
-      if (!id) return ok(null);
-      const user = DB.getById(DB.KEYS.users, id);
-      if (!user) return ok(null);
-      const { password: _pw, ...safe } = user;
-      return ok(safe);
+      const profile = await myProfile();
+      return profile && profile.status === 'approved' ? profile : null;
     },
 
-    // -------------------- auth: регистрация в 3 шага ---------------------
-    /** Шаг 1: "отправляет" код на почту. Демо-режим — код возвращается
-     *  вызывающей стороне, чтобы показать его прямо в интерфейсе. */
+    // Регистрация: 1) код на e-mail, 2) проверка кода, 3) пароль + ФИО.
+    // Письмо содержит и код (если шаблон с {{ .Token }}), и ссылку: по ссылке
+    // человек возвращается на login.html с сессией и сразу попадает на шаг 3.
     async requestCode(email) {
-      const normalizedEmail = (email || '').trim().toLowerCase();
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) return fail('Введите корректный e-mail.');
-      const existingUser = DB.getAll(DB.KEYS.users).find((u) => u.email.toLowerCase() === normalizedEmail);
-      if (existingUser) return fail('Пользователь с таким e-mail уже зарегистрирован.');
-      const pendingReq = DB.getAll(DB.KEYS.registrations).find(
-        (r) => r.email.toLowerCase() === normalizedEmail && r.status === 'pending'
-      );
-      if (pendingReq) return fail('Заявка с этим e-mail уже отправлена и ждёт решения учителя.');
-      const code = String(Math.floor(100000 + Math.random() * 900000));
-      sessionStorage.setItem(CODE_KEY, JSON.stringify({ email: normalizedEmail, code, expiresAt: Date.now() + 10 * 60 * 1000 }));
-      return ok({ email: normalizedEmail, code });
+      const normalized = (email || '').trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) throw new Error('Введите корректный e-mail.');
+      const redirect = new URL('login.html?confirmed=1', window.location.href).href;
+      unwrap(await sb.auth.signInWithOtp({ email: normalized, options: { shouldCreateUser: true, emailRedirectTo: redirect } }));
+      return normalized;
     },
-    /** Шаг 2: проверка кода из письма. */
+    /** Профиль текущей сессии в любом статусе — для продолжения регистрации. */
+    async sessionProfile() {
+      const { data } = await sb.auth.getSession();
+      return data.session ? myProfile() : null;
+    },
+    /** Возвращает профиль: по нему видно, не зарегистрирован ли человек уже. */
     async verifyCode(email, code) {
-      const normalizedEmail = (email || '').trim().toLowerCase();
-      const raw = sessionStorage.getItem(CODE_KEY);
-      if (!raw) return fail('Код не запрошен или устарел. Запросите новый.');
-      const pending = JSON.parse(raw);
-      if (pending.email !== normalizedEmail) return fail('Код выдан для другого e-mail.');
-      if (Date.now() > pending.expiresAt) return fail('Срок действия кода истёк. Запросите новый.');
-      if (pending.code !== String(code).trim()) return fail('Неверный код подтверждения.');
-      sessionStorage.setItem(CODE_KEY, JSON.stringify({ ...pending, verified: true }));
-      return ok(true);
+      unwrap(await sb.auth.verifyOtp({ email: email.trim().toLowerCase(), token: String(code).trim(), type: 'email' }));
+      return myProfile();
     },
-    /** Шаг 3: пароль + ФИО + класс → заявка уходит в очередь к учителю. */
-    async submitRegistration({ email, password, lastName, firstName, middleName, className }) {
-      const normalizedEmail = (email || '').trim().toLowerCase();
-      const raw = sessionStorage.getItem(CODE_KEY);
-      const pending = raw ? JSON.parse(raw) : null;
-      if (!pending || pending.email !== normalizedEmail || !pending.verified) {
-        return fail('Сначала подтвердите e-mail кодом.');
-      }
-      if (!password || password.length < 4) return fail('Пароль должен быть не короче 4 символов.');
-      if (!lastName || !firstName) return fail('Укажите фамилию и имя.');
-      const record = DB.insert(DB.KEYS.registrations, 'r', {
-        email: normalizedEmail,
-        password,
-        lastName,
-        firstName,
-        middleName: middleName || '',
-        className: className || '',
-        status: 'pending',
-        requestedAt: new Date().toISOString().slice(0, 10),
-        decidedAt: null,
-        decidedBy: null,
-        rejectionReason: null,
-        assignedRole: null,
-      });
-      sessionStorage.removeItem(CODE_KEY);
-      return ok(record);
+    async submitRegistration({ password, lastName, firstName, middleName, className }) {
+      if (!password || password.length < 6) throw new Error('Пароль должен быть не короче 6 символов.');
+      if (!lastName || !firstName) throw new Error('Укажите фамилию и имя.');
+      const id = await myId();
+      if (!id) throw new Error('Сессия истекла — подтвердите e-mail заново.');
+      unwrap(await sb.auth.updateUser({ password }));
+      unwrap(await sb.from('profiles').update({
+        last_name: lastName, first_name: firstName, middle_name: middleName || '',
+        class_name: className || null, registration_completed: true,
+      }).eq('id', id));
+      await sb.auth.signOut();
     },
   };
 
   // -------------------- заявки на регистрацию (учитель) ------------------
   const registrations = {
-    async list(filter = {}) {
-      let items = DB.getAll(DB.KEYS.registrations);
-      if (filter.status) items = items.filter((r) => r.status === filter.status);
-      return ok(items.sort((a, b) => (a.requestedAt < b.requestedAt ? 1 : -1)));
+    async listPending() {
+      const rows = unwrap(await sb.from('profiles').select('*')
+        .eq('status', 'pending').eq('registration_completed', true)
+        .order('created_at', { ascending: true }));
+      return rows.map(toProfile);
     },
-    async approve(id, { role, decidedBy, className }) {
-      const req = DB.getById(DB.KEYS.registrations, id);
-      if (!req) return fail('Заявка не найдена');
-      if (req.status !== 'pending') return fail('Заявка уже рассмотрена');
-      const user = DB.insert(DB.KEYS.users, 'u', {
-        role,
-        firstName: req.firstName,
-        lastName: req.lastName,
-        middleName: req.middleName,
-        email: req.email,
-        password: req.password,
-        className: role === 'student' ? (className || req.className) : null,
-        avatarColor: ['#6ec6ff', '#5be8a7', '#f5c77d', '#8a6cff', '#ff8a9e'][Math.floor(Math.random() * 5)],
-      });
-      DB.update(DB.KEYS.registrations, id, {
-        status: 'approved',
-        decidedAt: new Date().toISOString().slice(0, 10),
-        decidedBy,
-        assignedRole: role,
-      });
-      return ok(user);
+    async approve(userId, role, className) {
+      unwrap(await sb.rpc('approve_registration', { p_user: userId, p_role: role, p_class: className || null }));
     },
-    async reject(id, { reason, decidedBy }) {
-      const req = DB.getById(DB.KEYS.registrations, id);
-      if (!req) return fail('Заявка не найдена');
-      if (req.status !== 'pending') return fail('Заявка уже рассмотрена');
-      const updated = DB.update(DB.KEYS.registrations, id, {
-        status: 'rejected',
-        decidedAt: new Date().toISOString().slice(0, 10),
-        decidedBy,
-        rejectionReason: reason || 'Без указания причины',
-      });
-      return ok(updated);
+    async reject(userId, reason) {
+      unwrap(await sb.rpc('reject_registration', { p_user: userId, p_reason: reason }));
     },
   };
 
-  // -------------------- users ---------------------------------------------
+  // -------------------- пользователи (учитель видит всех) ----------------
   const users = {
-    async list(filter = {}) {
-      let items = DB.getAll(DB.KEYS.users).map(({ password, ...u }) => u);
-      if (filter.role) items = items.filter((u) => u.role === filter.role);
-      if (filter.className) items = items.filter((u) => u.className === filter.className);
-      return ok(items);
-    },
-    async get(id) {
-      const u = DB.getById(DB.KEYS.users, id);
-      if (!u) return fail('Пользователь не найден');
-      const { password, ...safe } = u;
-      return ok(safe);
+    async listStudents() {
+      const rows = unwrap(await sb.from('profiles').select('*')
+        .eq('role', 'student').eq('status', 'approved').order('last_name'));
+      return rows.map(toProfile);
     },
   };
 
-  // -------------------- achievements --------------------------------------
+  // -------------------- конкурсы ------------------------------------------
+  const contestCols = (d) => ({
+    title: d.title, description: d.description || '', category: d.category,
+    subject: d.subject || null, level: d.level, period: d.period || '',
+    start_date: d.startDate || null, end_date: d.endDate || null, status: d.status,
+  });
+  const contests = {
+    async list() {
+      const rows = unwrap(await sb.from('contests').select('*').order('start_date', { ascending: false, nullsFirst: false }));
+      return rows.map(toContest);
+    },
+    async create(d) {
+      if (!d.title) throw new Error('Укажите название конкурса');
+      return toContest(unwrap(await sb.from('contests').insert({ ...contestCols(d), created_by: await myId() }).select().single()));
+    },
+    async update(id, d) {
+      return toContest(unwrap(await sb.from('contests').update(contestCols(d)).eq('id', id).select().single()));
+    },
+    async remove(id) {
+      unwrap(await sb.from('contests').delete().eq('id', id));
+    },
+  };
+
+  // -------------------- участие в конкурсах -------------------------------
+  const participations = {
+    async listMine() {
+      const rows = unwrap(await sb.from('participations').select('*, contests(*)').eq('user_id', await myId()));
+      return rows.map(toParticipation);
+    },
+    async join(contestId) {
+      const { error } = await sb.from('participations').insert({ contest_id: contestId, user_id: await myId() });
+      if (error && error.code === '23505') throw new Error('Вы уже участвуете в этом конкурсе.');
+      if (error) fail(error);
+    },
+    async leave(id) {
+      unwrap(await sb.from('participations').delete().eq('id', id));
+    },
+    async listForContest(contestId) {
+      const rows = unwrap(await sb.from('participations')
+        .select('*, profiles!participations_user_id_fkey(*)')
+        .eq('contest_id', contestId).order('created_at'));
+      return rows.map(toParticipation);
+    },
+    async countsByContest() {
+      const rows = unwrap(await sb.from('participations').select('contest_id'));
+      return rows.reduce((acc, r) => ({ ...acc, [r.contest_id]: (acc[r.contest_id] || 0) + 1 }), {});
+    },
+    /** Начислить/сменить/снять результат; прежняя награда отзывается с причиной. */
+    async setResult(id, result, reason) {
+      unwrap(await sb.rpc('set_participation_result', { p_participation: id, p_result: result, p_reason: reason || null }));
+    },
+  };
+
+  // -------------------- достижения ----------------------------------------
   const achievements = {
-    async list(filter = {}) {
-      let items = DB.getAll(DB.KEYS.achievements);
-      if (filter.userId) items = items.filter((a) => a.userId === filter.userId);
-      if (filter.status) items = items.filter((a) => a.status === filter.status);
-      if (filter.subject) items = items.filter((a) => a.subject === filter.subject);
-      if (filter.category) items = items.filter((a) => a.category === filter.category);
-      return ok(items.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)));
+    async listMine() {
+      const rows = unwrap(await sb.from('achievements').select('*').eq('user_id', await myId())
+        .order('created_at', { ascending: false }));
+      return rows.map(toAchievement);
     },
-    /** Ученик отправляет достижение — всегда уходит в статус "pending". */
-    async submit(data) {
-      if (!data.userId || !data.category || !data.title) return fail('Заполните обязательные поля');
-      const points = calcAchievementPoints(data);
-      const record = DB.insert(DB.KEYS.achievements, 'a', {
-        userId: data.userId,
-        category: data.category,
-        subject: data.subject || null,
-        title: data.title,
-        description: data.description || '',
-        level: data.level || null,
-        place: data.place || null,
-        hours: data.hours ? Number(data.hours) : null,
-        period: data.period || '',
-        date: data.date || new Date().toISOString().slice(0, 10),
-        points,
-        status: 'pending',
-        teacherComment: '',
-        verifiedBy: null,
-        verifiedAt: null,
-        createdAt: new Date().toISOString().slice(0, 10),
-      });
-      return ok(record);
+    async listAll(filter = {}) {
+      let q = sb.from('achievements').select('*, profiles!achievements_user_id_fkey(*)').order('created_at', { ascending: false });
+      if (filter.status) q = q.eq('status', filter.status);
+      if (filter.userId) q = q.eq('user_id', filter.userId);
+      return unwrap(await q).map(toAchievement);
     },
-    /** Учитель добавляет достижение ученику напрямую — сразу подтверждено. */
-    async createByTeacher(data, teacherId) {
-      if (!data.userId || !data.category || !data.title) return fail('Заполните обязательные поля');
-      const points = calcAchievementPoints(data);
-      const record = DB.insert(DB.KEYS.achievements, 'a', {
-        userId: data.userId,
-        category: data.category,
-        subject: data.subject || null,
-        title: data.title,
-        description: data.description || '',
-        level: data.level || null,
-        place: data.place || null,
-        hours: data.hours ? Number(data.hours) : null,
-        period: data.period || '',
-        date: data.date || new Date().toISOString().slice(0, 10),
-        points,
-        status: 'approved',
-        teacherComment: 'Добавлено учителем',
-        verifiedBy: teacherId,
-        verifiedAt: new Date().toISOString().slice(0, 10),
-        createdAt: new Date().toISOString().slice(0, 10),
-      });
-      return ok(record);
+    async byIds(ids) {
+      if (!ids.length) return [];
+      return unwrap(await sb.from('achievements').select('*').in('id', ids)).map(toAchievement);
     },
-    async verify(id, { status, teacherComment, verifiedBy, points }) {
-      const existing = DB.getById(DB.KEYS.achievements, id);
-      if (!existing) return fail('Достижение не найдено');
-      const updated = DB.update(DB.KEYS.achievements, id, {
-        status,
-        teacherComment: teacherComment || '',
-        verifiedBy,
-        verifiedAt: new Date().toISOString().slice(0, 10),
-        points: points != null ? Number(points) : existing.points,
-      });
-      return ok(updated);
+    /** Ученик подаёт достижение: база сама ставит «на проверке» и считает баллы. */
+    async submit(d) {
+      const row = unwrap(await sb.from('achievements').insert({
+        user_id: await myId(), category: d.category, subject: d.subject || null,
+        title: d.title, description: d.description || '', level: d.level || null,
+        place: d.place || null, hours: d.hours ? Number(d.hours) : null,
+        period: d.period || '', date: d.date, proof_url: d.proofUrl || null,
+      }).select().single());
+      return toAchievement(row);
+    },
+    async createByTeacher(d) {
+      return unwrap(await sb.rpc('teacher_add_achievement', {
+        p_user: d.userId, p_category: d.category, p_subject: d.subject || '',
+        p_title: d.title, p_level: d.level || '', p_place: d.place || '',
+        p_hours: d.hours ? Number(d.hours) : null, p_period: d.period || '', p_date: d.date || null,
+      }));
+    },
+    async verify(id, { status, points, comment }) {
+      unwrap(await sb.rpc('verify_achievement', {
+        p_id: id, p_status: status, p_points: points === '' || points == null ? null : Number(points), p_comment: comment || '',
+      }));
+    },
+    async revoke(id, reason) {
+      unwrap(await sb.rpc('revoke_achievement', { p_id: id, p_reason: reason }));
+    },
+    async history(id) {
+      return unwrap(await sb.from('award_log').select('*').eq('achievement_id', id).order('created_at'));
     },
   };
 
-  // -------------------- рейтинг --------------------------------------------
+  // -------------------- рейтинг и статистика -----------------------------
   const rating = {
-    /** Агрегирует баллы подтверждённых достижений по ученикам. */
     async compute(filter = {}) {
-      const allUsers = DB.getAll(DB.KEYS.users).filter((u) => u.role === 'student');
-      let allAch = DB.getAll(DB.KEYS.achievements).filter((a) => a.status === 'approved');
-      if (filter.period) allAch = allAch.filter((a) => a.period === filter.period);
-      if (filter.subject) allAch = allAch.filter((a) => a.subject === filter.subject);
-
-      let rows = allUsers
-        .filter((u) => !filter.className || u.className === filter.className)
-        .map((u) => {
-          const mine = allAch.filter((a) => a.userId === u.id);
-          const bySubject = { physics: 0, math: 0, cs: 0 };
-          mine.forEach((a) => { if (a.subject && bySubject[a.subject] != null) bySubject[a.subject] += a.points; });
-          const total = mine.reduce((sum, a) => sum + a.points, 0);
-          return {
-            userId: u.id,
-            name: fullName(u),
-            className: u.className,
-            total,
-            physics: bySubject.physics,
-            math: bySubject.math,
-            cs: bySubject.cs,
-            achievementsCount: mine.length,
-          };
-        });
-      rows.sort((a, b) => b.total - a.total);
-      rows = rows.map((r, idx) => ({ ...r, rank: idx + 1 }));
-      return ok(rows);
+      const rows = unwrap(await sb.rpc('get_rating', {
+        p_class: filter.className || null, p_subject: filter.subject || null, p_period: filter.period || null,
+      }));
+      return rows.map((r, idx) => ({
+        rank: idx + 1, userId: r.user_id, name: r.full_name, className: r.class_name,
+        physics: r.physics, math: r.math, cs: r.cs, total: r.total, achievementsCount: r.achievements_count,
+      }));
     },
   };
 
-  // -------------------- отчёты (CSV) ----------------------------------------
+  const stats = {
+    async publicStats() {
+      const rows = unwrap(await sb.rpc('get_public_stats'));
+      return rows[0] || { students: 0, achievements: 0, points: 0, contests: 0 };
+    },
+  };
+
+  const telegram = {
+    async linkUrl() {
+      const code = unwrap(await sb.rpc('create_telegram_link_code'));
+      return `https://t.me/${TELEGRAM_BOT_USERNAME}?start=${code}`;
+    },
+  };
+
   const reports = {
     toCSV(rows) {
       if (!rows.length) return '';
       const headers = Object.keys(rows[0]);
-      const escape = (v) => `"${String(v).replace(/"/g, '""')}"`;
+      const escape = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
       const lines = [headers.map(escape).join(',')];
       rows.forEach((row) => lines.push(headers.map((h) => escape(row[h])).join(',')));
       return '﻿' + lines.join('\r\n');
     },
   };
 
-  return { auth, registrations, users, achievements, rating, reports };
+  return { auth, registrations, users, contests, participations, achievements, rating, stats, telegram, reports };
 })();

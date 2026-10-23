@@ -1,2 +1,5 @@
 .claude/
 .impeccable/
+bot/.env
+bot/.venv/
+__pycache__/

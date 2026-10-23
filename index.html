@@ -4,79 +4,105 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Портал достижений лицея</title>
-  <meta name="description" content="Карта достижений лицея по физике, математике и информатике: портфолио, рейтинг, верификация учителем." />
+  <meta name="description" content="Конкурсы, достижения и рейтинг лицея по физике, математике и информатике: портфолио, дипломы, Telegram-бот." />
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
-<body>
+<body class="glow-page">
   <nav class="navbar">
     <div class="container">
-      <a href="index.html" class="navbar__brand"><svg class="icon"><use href="#icon-orbit"></use></svg>Портал достижений</a>
-      <div class="navbar__links"></div>
-      <div class="flex-row">
-        <a href="login.html" class="btn btn--ghost btn--small">Войти</a>
-        <a href="login.html?tab=register" class="btn btn--star btn--small"><svg class="icon"><use href="#icon-star"></use></svg>Регистрация</a>
+      <a href="index.html" class="navbar__brand"><svg class="icon"><use href="#icon-logo"></use></svg>Портал достижений</a>
+      <div class="navbar__links">
+        <a href="#contests">Конкурсы</a>
+        <a href="#how">Как это работает</a>
+        <a href="#points">Баллы</a>
+        <a href="#bot">Telegram</a>
       </div>
+      <a href="login.html" class="btn btn--outline btn--small" aria-label="Войти"><svg class="icon"><use href="#icon-user"></use></svg>Войти</a>
     </div>
   </nav>
 
   <header class="hero">
-    <div class="container hero__content">
-      <h1>Твои достижения по физике, математике и информатике — <span class="accent">на карте звёзд</span></h1>
-      <p class="lead">Каждая подтверждённая олимпиада, проект или волонтёрский час зажигает свою звезду на твоей персональной карте. Учитель подтверждает, портал сам считает рейтинг и собирает портфолио.</p>
-      <div class="hero__actions">
-        <a href="login.html?tab=register" class="btn btn--star"><svg class="icon"><use href="#icon-star"></use></svg>Зарегистрироваться</a>
-        <a href="login.html" class="btn btn--ghost" style="background:rgba(255,255,255,.1); color:#fff; border-color:rgba(255,255,255,.3);">Уже есть аккаунт — войти</a>
+    <div class="container">
+      <h1>Карта <span class="accent">достижений</span><br>лицея</h1>
+      <div class="hero__grid">
+      <div class="hero__copy">
+        <p class="hero__lead">Конкурсы, олимпиады и проекты по <strong>физике, математике и информатике</strong> в одном месте. Учитель подтверждает результат, портал начисляет баллы, строит рейтинг и выдаёт именной диплом.</p>
+        <div class="hero__actions">
+          <a href="login.html?tab=register" class="btn">Зарегистрироваться<svg class="icon"><use href="#icon-arrow-right"></use></svg></a>
+          <a href="#contests" class="btn btn--outline">Смотреть конкурсы</a>
+        </div>
+        <a href="login.html?tab=register" class="badge-ring" aria-label="Регистрация">
+          <svg class="ring" viewBox="0 0 200 200" aria-hidden="true">
+            <defs><path id="ring-path" d="M100,100 m-78,0 a78,78 0 1,1 156,0 a78,78 0 1,1 -156,0"/></defs>
+            <text><textPath href="#ring-path">Регистрация • <tspan class="ring-blue">лицей</tspan> • Регистрация • <tspan class="ring-blue">лицей</tspan> •</textPath></text>
+          </svg>
+          <svg class="icon ring-arrow"><use href="#icon-arrow-right"></use></svg>
+        </a>
       </div>
-      <div class="hero__stats" id="hero-stats">
-        <div class="hero__stat"><strong id="stat-students">—</strong><span>учеников</span></div>
-        <div class="hero__stat"><strong id="stat-achievements">—</strong><span>достижений подтверждено</span></div>
-        <div class="hero__stat"><strong id="stat-points">—</strong><span>баллов на карте лицея</span></div>
+
+      <div class="hero__stage">
+        <svg class="sparkle hero__sparkle-a" aria-hidden="true"><use href="#icon-sparkle"></use></svg>
+        <svg class="sparkle hero__sparkle-b" aria-hidden="true"><use href="#icon-sparkle"></use></svg>
+        <div class="hero__pills">
+          <a href="#contests" class="pill">Олимпиады</a>
+          <a href="#contests" class="pill">Проекты</a>
+          <a href="#points" class="pill">Волонтёрство</a>
+          <a href="#how" class="pill">Рейтинг</a>
+        </div>
+        <div class="hero__arch" aria-hidden="true">
+          <div class="hero__arch-row"><span class="tag">олимпиада по физике</span><span class="tag tag--violet">портфолио</span><span class="tag">1 место</span></div>
+          <div class="hero__arch-row"><span class="tag">математика</span><span class="tag">призёр</span><span class="tag">топ-10 лицея</span></div>
+          <div class="hero__arch-row"><span class="tag tag--search">найти конкурс</span><span class="tag">диплом</span><span class="tag">проект</span></div>
+          <div class="hero__arch-row"><span class="tag">волонтёрство</span><span class="tag tag--blue">информатика</span><span class="tag">рейтинг класса</span></div>
+          <div class="hero__arch-row"><span class="tag">региональный этап</span><span class="tag">грамота</span><span class="tag tag--violet">бот</span></div>
+          <div class="hero__arch-row"><span class="tag">2 место</span><span class="tag">научная конференция</span><span class="tag">баллы</span></div>
+        </div>
+      </div>
       </div>
     </div>
   </header>
 
-  <section class="features">
+  <section class="section--tight">
+    <div class="container stat-row" id="landing-stats">
+      <div class="stat stat--total"><strong id="stat-points">—</strong><span>баллов в рейтинге</span></div>
+      <div class="stat"><strong id="stat-achievements">—</strong><span>подтверждённых достижений</span></div>
+      <div class="stat"><strong id="stat-students">—</strong><span>учеников</span></div>
+      <div class="stat stat--physics"><strong id="stat-contests">—</strong><span>открытых конкурсов</span></div>
+    </div>
+  </section>
+
+  <section class="section" id="contests">
     <div class="container">
-      <h2 class="section__title">Как устроен портал</h2>
-      <p class="section__subtitle">Три роли, один прозрачный процесс: заявил → подтвердили → появилось на карте и в рейтинге.</p>
-      <div class="features__grid">
-        <div class="feature-card">
-          <h3><svg class="icon feature-card__inline-icon" style="color:var(--subj-physics);"><use href="#icon-atom"></use></svg>Портфолио по направлениям</h3>
-          <p>Физика, математика и информатика — отдельные созвездия в твоей карте, с собственной суммой баллов.</p>
-        </div>
-        <div class="feature-card">
-          <h3><svg class="icon feature-card__inline-icon" style="color:var(--state-approved);"><use href="#icon-check-circle"></use></svg>Верификация учителем</h3>
-          <p>Каждое достижение и каждая новая регистрация проходят подтверждение, рейтинг нельзя накрутить.</p>
-        </div>
-        <div class="feature-card">
-          <h3><svg class="icon feature-card__inline-icon" style="color:var(--brand);"><use href="#icon-chart"></use></svg>Рейтинг по классам и периодам</h3>
-          <p>Топ-10 лицея, фильтры по классу и четверти/году: видно, кто и за что лидирует прямо сейчас.</p>
-        </div>
-        <div class="feature-card">
-          <h3><svg class="icon feature-card__inline-icon" style="color:#b8841f;"><use href="#icon-print"></use></svg>Портфолио на экспорт</h3>
-          <p>Готовая печатная форма для стипендии или поступления, без ручного сбора грамот и справок.</p>
-        </div>
+      <div class="section-head">
+        <h2>Афиша <span class="accent">конкурсов</span></h2>
+        <p>Учитель публикует конкурс, ты подаёшь заявку в один клик, а после итогов получаешь баллы и диплом.</p>
+      </div>
+      <div class="contest-grid" id="contests-grid"><div class="empty-state">Загружаем афишу…</div></div>
+    </div>
+  </section>
+
+  <section class="section" id="how">
+    <div class="container">
+      <div class="section-head">
+        <h2>Как это <span class="accent">работает</span></h2>
+        <p>Ничего не попадает в рейтинг без проверки учителем, поэтому баллы нельзя накрутить.</p>
+      </div>
+      <div class="steps">
+        <div class="step"><div class="step__num">01</div><h3>Регистрация</h3><p>E-mail, код из письма, пароль и ФИО. Заявка уходит учителю.</p></div>
+        <div class="step"><div class="step__num">02</div><h3>Одобрение</h3><p>Учитель проверяет заявку и назначает роль: ученик или учитель.</p></div>
+        <div class="step"><div class="step__num">03</div><h3>Конкурс или достижение</h3><p>Подай заявку на конкурс или добавь своё достижение, на сайте или в боте.</p></div>
+        <div class="step"><div class="step__num">04</div><h3>Звезда на карте</h3><p>Учитель ставит результат: баллы в рейтинг, звезда на карту, диплом готов.</p></div>
       </div>
     </div>
   </section>
 
-  <section class="steps">
+  <section class="section" id="points">
     <div class="container">
-      <h2 class="section__title">Путь одной звезды</h2>
-      <p class="section__subtitle">От заявки до строчки в рейтинге — четыре шага.</p>
-      <div class="steps__list">
-        <div class="step-card"><div class="step-card__num">01</div><h3>Регистрация</h3><p>E‑mail → код подтверждения → пароль и ФИО. Заявка уходит учителю.</p></div>
-        <div class="step-card"><div class="step-card__num">02</div><h3>Учитель одобряет</h3><p>Проверяет заявку, назначает роль «ученик» или «учитель».</p></div>
-        <div class="step-card"><div class="step-card__num">03</div><h3>Достижение на проверку</h3><p>Категория, предмет, уровень — баллы видны сразу, честно и прозрачно.</p></div>
-        <div class="step-card"><div class="step-card__num">04</div><h3>Звезда зажигается</h3><p>Учитель подтверждает — очки уходят в рейтинг, достижение в портфолио.</p></div>
+      <div class="section-head">
+        <h2>Система <span class="accent">баллов</span></h2>
+        <p>Чем выше уровень и место, тем больше баллов. Волонтёрство считается по часам с потолком в 10 баллов, чтобы количество не обесценивало качество.</p>
       </div>
-    </div>
-  </section>
-
-  <section class="points-table-section">
-    <div class="container">
-      <h2 class="section__title">Система баллов</h2>
-      <p class="section__subtitle">Прозрачно и обоснованно: чем выше уровень и место — тем больше баллов. Волонтёрство считается по часам с разумным потолком, чтобы не обесценивать качество помощи количеством заявок.</p>
       <div class="table-wrap">
         <table class="points-table">
           <thead><tr><th>Категория</th><th>Уровень</th><th>Участие</th><th>3 место</th><th>2 место</th><th>1 место</th></tr></thead>
@@ -89,37 +115,81 @@
             <tr><td rowspan="3">Проект</td><td>Школьный</td><td>5</td><td>8</td><td>10</td><td>12</td></tr>
             <tr><td>Городской</td><td>10</td><td>14</td><td>16</td><td>20</td></tr>
             <tr><td>Региональный</td><td>15</td><td>20</td><td>25</td><td>30</td></tr>
-            <tr><td>Академическое достижение</td><td>—</td><td colspan="4">5 баллов за подтверждённую заявку</td></tr>
-            <tr><td>Волонтёрство</td><td>—</td><td colspan="4">1 балл за 2 часа, максимум 10 за заявку</td></tr>
+            <tr><td>Академическое</td><td>—</td><td colspan="4">5 баллов за подтверждённое достижение</td></tr>
+            <tr><td>Волонтёрство</td><td>—</td><td colspan="4">1 балл за 2 часа, не больше 10 за заявку</td></tr>
           </tbody>
         </table>
       </div>
     </div>
   </section>
 
-  <section class="footer-cta">
+  <section class="section" id="bot">
     <div class="container">
-      <h2>Готов зажечь первую звезду?</h2>
-      <p>Регистрация занимает меньше двух минут — остальное сделает учитель.</p>
-      <a href="login.html?tab=register" class="btn btn--star"><svg class="icon"><use href="#icon-star"></use></svg>Начать регистрацию</a>
+      <div class="tg-banner">
+        <div>
+          <h2>Рейтинг и баллы<br>прямо в Telegram</h2>
+          <p>Привяжи аккаунт в личном кабинете, и бот покажет твоё место в рейтинге, примет новое достижение и сразу напишет, когда учитель его проверит.</p>
+          <a class="btn" href="https://t.me/achievementsportal_bot" target="_blank" rel="noopener"><svg class="icon"><use href="#icon-telegram"></use></svg>@achievementsportal_bot</a>
+        </div>
+        <div class="tg-banner__list">
+          <span class="tag">/rating — моё место</span>
+          <span class="tag">/add — новое достижение</span>
+          <span class="tag">/contests — афиша</span>
+          <span class="tag">уведомления о проверке</span>
+          <span class="tag">начисления и отмены</span>
+        </div>
+      </div>
     </div>
   </section>
 
-  <footer class="site-footer container">Портал достижений лицея — учебный прототип, физика · математика · информатика.</footer>
+  <section class="final-cta">
+    <div class="container">
+      <h2>Зажги <span class="accent">первую</span><br>звезду</h2>
+      <p>Регистрация занимает пару минут, остальное подтвердит учитель.</p>
+      <a href="login.html?tab=register" class="btn">Начать регистрацию<svg class="icon"><use href="#icon-arrow-right"></use></svg></a>
+    </div>
+  </section>
 
-  <script src="js/db.js"></script>
-  <script src="js/api.js"></script>
+  <div class="container">
+    <footer class="site-footer"><span>Портал достижений лицея · физика · математика · информатика</span><span>Данные хранятся в общей базе PostgreSQL (Supabase)</span></footer>
+  </div>
+
+  <script src="assets/vendor/supabase.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/points.js"></script>
   <script src="js/common.js"></script>
+  <script src="js/api.js"></script>
   <script>
+    // Лендинг публичный: статистика и афиша читаются без входа (anon-доступ по RLS).
     (async function initLanding() {
-      const [students, achievements, rating] = await Promise.all([
-        api.users.list({ role: 'student' }),
-        api.achievements.list({ status: 'approved' }),
-        api.rating.compute(),
-      ]);
-      document.getElementById('stat-students').textContent = students.length;
-      document.getElementById('stat-achievements').textContent = achievements.length;
-      document.getElementById('stat-points').textContent = rating.reduce((s, r) => s + r.total, 0);
+      try {
+        const s = await api.stats.publicStats();
+        document.getElementById('stat-points').textContent = s.points;
+        document.getElementById('stat-achievements').textContent = s.achievements;
+        document.getElementById('stat-students').textContent = s.students;
+        document.getElementById('stat-contests').textContent = s.contests;
+      } catch (e) { console.warn('stats', e); }
+
+      const grid = document.getElementById('contests-grid');
+      try {
+        const contests = (await api.contests.list()).filter((c) => c.status !== 'finished');
+        if (!contests.length) { grid.innerHTML = '<div class="empty-state">Открытых конкурсов пока нет — загляни позже.</div>'; return; }
+        grid.innerHTML = contests.map((c) => `
+          <article class="contest-card">
+            <div class="contest-card__meta">
+              <span class="badge badge--${c.status}">${CONTEST_STATUS_LABELS[c.status]}</span>
+              ${subjectTag(c.subject)}
+            </div>
+            <h3>${escapeHtml(c.title)}</h3>
+            <p>${escapeHtml(c.description)}</p>
+            <div class="contest-card__footer">
+              <span class="contest-card__dates">${formatDate(c.startDate)} — ${formatDate(c.endDate)}</span>
+              <a class="btn btn--small" href="login.html">Участвовать</a>
+            </div>
+          </article>`).join('');
+      } catch (e) {
+        grid.innerHTML = `<div class="empty-state">Не удалось загрузить афишу: ${escapeHtml(e.message)}</div>`;
+      }
     })();
   </script>
 </body>

@@ -1,347 +1,382 @@
 /**
  * teacher.js — кабинет учителя.
- * Блоки: (1) вкладки, (2) заявки на регистрацию, (3) верификация
- * достижений, (4) ученики + добавление достижения напрямую, (5) рейтинг.
+ * Блоки: (1) заявки на регистрацию, (2) конкурсы и результаты участников
+ * (начисление и отмена наград), (3) проверка достижений, (4) журнал
+ * начислений с отменой, (5) ученики и прямое начисление, (6) рейтинг + CSV.
+ * Любое изменение баллов идёт через RPC-функции базы, которые сами
+ * проверяют роль и пишут историю в award_log.
  */
 
-let CURRENT_TEACHER = null;
-let CURRENT_REG_ID = null;
-let CURRENT_VERIFY_ID = null;
+let ME = null;
+let CONTESTS = [];
+let PENDING_ACH = [];
+let CURRENT_VERIFY = null;
+let CURRENT_CONTEST = null;
+let LAST_RATING = [];
 
-function initTabs() {
-  const buttons = document.querySelectorAll('.tab-btn');
-  buttons.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      buttons.forEach((b) => b.classList.toggle('active', b === btn));
-      document.querySelectorAll('.tab-panel').forEach((panel) => {
-        panel.classList.toggle('active', panel.id === `panel-${btn.dataset.tab}`);
-      });
-    });
-  });
+const SOURCE_LABELS = { student: 'Ученик', teacher: 'Учитель', contest: 'Конкурс', telegram: 'Бот' };
+const LOG_LABELS = { awarded: 'Начислено', approved: 'Подтверждено', rejected: 'Отклонено', revoked: 'Отозвано' };
+
+function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+function wireModalClose() {
+  document.querySelectorAll('.modal-overlay').forEach((m) => m.addEventListener('click', (e) => {
+    if (e.target === m || e.target.closest('[data-close]')) m.classList.add('hidden');
+  }));
+}
+async function guard(fn, okMessage) {
+  try { await fn(); if (okMessage) showToast(okMessage); return true; }
+  catch (ex) { showToast(ex.message, true); return false; }
+}
+function setCount(id, n) { const el = document.getElementById(id); el.hidden = !n; el.textContent = n; }
+function periodSelectHtml(onlyQuarters) {
+  return periodOptions().filter((o) => !onlyQuarters || o.value.includes('четверть'))
+    .map((o) => `<option value="${o.value}">${o.label}</option>`).join('');
 }
 
-function subjectTag(subject) {
-  if (!subject) return '<span class="subject-tag subject-tag--none">Общее</span>';
-  const labels = { physics: 'Физика', math: 'Математика', cs: 'Информатика' };
-  return `<span class="subject-tag subject-tag--${subject}">${labels[subject]}</span>`;
-}
-
-// ================= Заявки на регистрацию =================
-
+// ================= (1) заявки на регистрацию =================
 async function renderRegistrations() {
-  const pending = await api.registrations.list({ status: 'pending' });
+  const pending = await api.registrations.listPending();
+  setCount('count-registrations', pending.length);
   const tbody = document.getElementById('registrations-tbody');
-  const emptyState = document.getElementById('registrations-empty');
-  const countBadge = document.getElementById('count-registrations');
-
-  countBadge.style.display = pending.length ? 'inline-block' : 'none';
-  countBadge.textContent = pending.length;
-
-  if (!pending.length) {
-    tbody.innerHTML = '';
-    emptyState.style.display = 'block';
-    return;
-  }
-  emptyState.style.display = 'none';
-
-  tbody.innerHTML = pending.map((r) => `
+  tbody.innerHTML = pending.length ? pending.map((p) => `
     <tr>
-      <td>${escapeHtml([r.lastName, r.firstName, r.middleName].filter(Boolean).join(' '))}</td>
-      <td>${escapeHtml(r.email)}</td>
-      <td>${escapeHtml(r.className || '—')}</td>
-      <td>${formatDate(r.requestedAt)}</td>
-      <td><button class="btn btn--small" data-decide="${r.id}">Рассмотреть</button></td>
-    </tr>`).join('');
-
-  tbody.querySelectorAll('[data-decide]').forEach((btn) => {
-    btn.addEventListener('click', () => openRegDecision(btn.dataset.decide, pending));
-  });
+      <td>${escapeHtml(p.fullName)}</td>
+      <td class="muted">${escapeHtml(p.email)}</td>
+      <td>${escapeHtml(p.className || '—')}</td>
+      <td class="muted">${formatDate(p.createdAt)}</td>
+      <td><div class="field" style="margin:0; min-width:130px;"><select data-role-for="${p.id}" aria-label="Роль"><option value="student">Ученик</option><option value="teacher">Учитель</option></select></div></td>
+      <td><div class="flex-row" style="flex-wrap:nowrap;">
+        <button class="btn btn--small" data-approve="${p.id}" data-class="${escapeHtml(p.className || '')}">${icon('check')}Принять</button>
+        <button class="btn btn--danger btn--small" data-reject="${p.id}">${icon('x')}Отклонить</button>
+      </div></td>
+    </tr>`).join('') : '<tr><td colspan="6" class="empty-state">Новых заявок нет.</td></tr>';
 }
 
-function openRegDecision(id, pendingList) {
-  const req = pendingList.find((r) => r.id === id);
-  CURRENT_REG_ID = id;
-  document.getElementById('reg-decision-title').textContent = 'Заявка на регистрацию';
-  document.getElementById('reg-decision-summary').innerHTML = `
-    <strong>${escapeHtml([req.lastName, req.firstName, req.middleName].filter(Boolean).join(' '))}</strong><br />
-    ${escapeHtml(req.email)} · класс: ${escapeHtml(req.className || '—')} · подана ${formatDate(req.requestedAt)}`;
-  document.getElementById('reg-role-select').value = req.className ? 'student' : 'student';
-  document.getElementById('reg-decision-overlay').classList.remove('hidden');
-}
-function closeRegDecision() { document.getElementById('reg-decision-overlay').classList.add('hidden'); }
-
-function initRegistrationFlow() {
-  document.getElementById('reg-decision-cancel').addEventListener('click', closeRegDecision);
-  document.getElementById('reg-decision-overlay').addEventListener('click', (e) => {
-    if (e.target.id === 'reg-decision-overlay') closeRegDecision();
-  });
-
-  document.getElementById('reg-decision-approve').addEventListener('click', async () => {
-    const role = document.getElementById('reg-role-select').value;
-    try {
-      await api.registrations.approve(CURRENT_REG_ID, { role, decidedBy: CURRENT_TEACHER.id });
-      closeRegDecision();
-      showToast('Заявка одобрена, пользователь может входить в систему');
-      await renderRegistrations();
-    } catch (err) {
-      showToast(err.message, true);
-    }
-  });
-
-  document.getElementById('reg-decision-reject').addEventListener('click', () => {
-    closeRegDecision();
-    document.getElementById('reg-reject-reason').value = '';
-    document.getElementById('reg-reject-overlay').classList.remove('hidden');
-  });
-  document.getElementById('reg-reject-cancel').addEventListener('click', () => {
-    document.getElementById('reg-reject-overlay').classList.add('hidden');
-  });
-  document.getElementById('reg-reject-confirm').addEventListener('click', async () => {
-    try {
-      await api.registrations.reject(CURRENT_REG_ID, {
-        reason: document.getElementById('reg-reject-reason').value.trim(),
-        decidedBy: CURRENT_TEACHER.id,
-      });
-      document.getElementById('reg-reject-overlay').classList.add('hidden');
-      showToast('Заявка отклонена');
-      await renderRegistrations();
-    } catch (err) {
-      showToast(err.message, true);
-    }
-  });
+// ================= (2) конкурсы =================
+async function renderContests() {
+  const [contests, counts] = await Promise.all([api.contests.list(), api.participations.countsByContest()]);
+  CONTESTS = contests;
+  const grid = document.getElementById('teacher-contest-grid');
+  grid.innerHTML = contests.length ? contests.map((c) => {
+    const level = (c.category === 'olympiad' ? OLYMPIAD_LEVELS : PROJECT_LEVELS)[c.level];
+    return `
+      <article class="contest-card">
+        <div class="contest-card__meta">
+          <span class="badge badge--${c.status}">${CONTEST_STATUS_LABELS[c.status]}</span>
+          ${subjectTag(c.subject)}
+          <span class="subject">${CATEGORY_LABELS[c.category]}${level ? ' · ' + level.label : ''}</span>
+        </div>
+        <h3>${escapeHtml(c.title)}</h3>
+        <p>${escapeHtml(c.description)}</p>
+        <span class="contest-card__dates">${formatDate(c.startDate)} — ${formatDate(c.endDate)} · ${escapeHtml(c.period || 'период не указан')}</span>
+        <div class="contest-card__footer">
+          <button class="btn btn--small" data-participants="${c.id}">Участники · ${counts[c.id] || 0}</button>
+          <div class="flex-row">
+            <button class="btn btn--outline btn--small" data-edit-contest="${c.id}" aria-label="Изменить">${icon('edit')}</button>
+            <button class="btn btn--danger btn--small" data-delete-contest="${c.id}" aria-label="Удалить">${icon('trash')}</button>
+          </div>
+        </div>
+      </article>`;
+  }).join('') : '<div class="empty-state">Конкурсов пока нет — опубликуйте первый.</div>';
 }
 
-// ================= Достижения на проверке =================
+function syncContestLevel(selected) {
+  fillLevelOptions(document.getElementById('c-level'), document.getElementById('c-category').value);
+  if (selected) document.getElementById('c-level').value = selected;
+}
+function openContestModal(contest) {
+  document.getElementById('contest-modal-title').textContent = contest ? 'Изменить конкурс' : 'Новый конкурс';
+  document.getElementById('c-id').value = contest ? contest.id : '';
+  document.getElementById('c-title').value = contest ? contest.title : '';
+  document.getElementById('c-description').value = contest ? contest.description : '';
+  document.getElementById('c-category').value = contest ? contest.category : 'olympiad';
+  syncContestLevel(contest ? contest.level : null);
+  document.getElementById('c-subject').value = contest ? contest.subject || '' : '';
+  document.getElementById('c-status').value = contest ? contest.status : 'active';
+  document.getElementById('c-start').value = contest ? contest.startDate || '' : '';
+  document.getElementById('c-end').value = contest ? contest.endDate || '' : '';
+  document.getElementById('c-period').value = contest && contest.period ? contest.period : periodOf();
+  openModal('contest-modal');
+}
 
-async function renderVerifyQueue() {
-  const [pending, users] = await Promise.all([
-    api.achievements.list({ status: 'pending' }),
-    api.users.list(),
-  ]);
-  const tbody = document.getElementById('verify-tbody');
-  const emptyState = document.getElementById('verify-empty');
-  const countBadge = document.getElementById('count-verify');
+async function openParticipants(contestId) {
+  CURRENT_CONTEST = CONTESTS.find((c) => c.id === contestId);
+  document.getElementById('participants-title').textContent = CURRENT_CONTEST.title;
+  const level = (CURRENT_CONTEST.category === 'olympiad' ? OLYMPIAD_LEVELS : PROJECT_LEVELS)[CURRENT_CONTEST.level];
+  document.getElementById('participants-summary').innerHTML =
+    `${CATEGORY_LABELS[CURRENT_CONTEST.category]} · ${level ? level.label : ''} уровень. Баллы за результат: ` +
+    ['participant', '3', '2', '1'].map((r) => `${RESULT_LABELS[r].toLowerCase()} — <strong>${calcAchievementPoints({ category: CURRENT_CONTEST.category, level: CURRENT_CONTEST.level, place: r })}</strong>`).join(', ') +
+    '. Если у участника уже есть награда, при смене результата она отзывается — понадобится причина.';
+  await renderParticipants();
+  openModal('participants-modal');
+}
 
-  countBadge.style.display = pending.length ? 'inline-block' : 'none';
-  countBadge.textContent = pending.length;
-
-  if (!pending.length) {
-    tbody.innerHTML = '';
-    emptyState.style.display = 'block';
-    return;
-  }
-  emptyState.style.display = 'none';
-
-  tbody.innerHTML = pending.map((a) => {
-    const u = users.find((x) => x.id === a.userId);
+async function renderParticipants() {
+  const list = await api.participations.listForContest(CURRENT_CONTEST.id);
+  const awards = Object.fromEntries((await api.achievements.byIds(list.map((p) => p.achievementId).filter(Boolean))).map((a) => [a.id, a]));
+  const options = (cur) => Object.entries(RESULT_LABELS).map(([k, v]) => `<option value="${k}" ${k === cur ? 'selected' : ''}>${v}</option>`).join('');
+  document.getElementById('participants-tbody').innerHTML = list.length ? list.map((p) => {
+    const ach = awards[p.achievementId];
     return `
       <tr>
-        <td>${escapeHtml(u ? `${u.lastName} ${u.firstName}` : a.userId)}</td>
-        <td>${escapeHtml(a.title)}</td>
-        <td><span class="category-tag">${CATEGORY_LABELS[a.category]}</span></td>
-        <td>${subjectTag(a.subject)}</td>
-        <td>${a.points}</td>
-        <td><button class="btn btn--small" data-verify="${a.id}">Проверить</button></td>
+        <td>${escapeHtml(p.student ? p.student.fullName : '—')}</td>
+        <td>${escapeHtml(p.student ? p.student.className || '—' : '—')}</td>
+        <td>${resultBadge(p.result)}</td>
+        <td><div class="field" style="margin:0; min-width:150px;"><select data-result-for="${p.id}" aria-label="Новый результат">${options(p.result)}</select></div></td>
+        <td class="num-strong">${ach && ach.status === 'approved' ? '+' + ach.points : '—'}</td>
+        <td><div class="flex-row" style="flex-wrap:nowrap;">
+          <button class="btn btn--small" data-save-result="${p.id}" data-had-award="${p.achievementId ? 1 : 0}">Сохранить</button>
+          ${p.achievementId ? `<button class="btn btn--outline btn--small" data-history="${p.achievementId}" aria-label="История">${icon('history')}</button>` : ''}
+        </div></td>
       </tr>`;
-  }).join('');
+  }).join('') : '<tr><td colspan="6" class="empty-state">На этот конкурс ещё никто не записался.</td></tr>';
+}
 
-  tbody.querySelectorAll('[data-verify]').forEach((btn) => {
-    btn.addEventListener('click', () => openVerifyModal(btn.dataset.verify, pending, users));
+// ================= (3) проверка =================
+async function renderVerify() {
+  PENDING_ACH = await api.achievements.listAll({ status: 'pending' });
+  setCount('count-verify', PENDING_ACH.length);
+  document.getElementById('verify-tbody').innerHTML = PENDING_ACH.length ? PENDING_ACH.map((a) => `
+    <tr>
+      <td>${escapeHtml(a.student ? a.student.fullName : '—')}<div class="muted" style="font-size:12.5px;">${escapeHtml(a.student ? a.student.className || '' : '')}</div></td>
+      <td>${escapeHtml(a.title)}${a.source === 'telegram' ? ' <span class="muted">· из бота</span>' : ''}</td>
+      <td class="muted">${CATEGORY_LABELS[a.category]}</td>
+      <td>${subjectTag(a.subject)}</td>
+      <td>${a.points}</td>
+      <td><button class="btn btn--small" data-verify="${a.id}">Проверить</button></td>
+    </tr>`).join('') : '<tr><td colspan="6" class="empty-state">Все заявки проверены.</td></tr>';
+}
+
+function openVerify(id) {
+  const a = PENDING_ACH.find((x) => x.id === id);
+  CURRENT_VERIFY = a;
+  const levels = a.category === 'olympiad' ? OLYMPIAD_LEVELS : a.category === 'project' ? PROJECT_LEVELS : null;
+  document.getElementById('verify-summary').innerHTML = `
+    <strong>${escapeHtml(a.title)}</strong><br />
+    ${escapeHtml(a.student ? a.student.fullName : '')} · ${CATEGORY_LABELS[a.category]}${a.subject ? ' · ' + SUBJECT_LABELS[a.subject] : ''}
+    ${levels && a.level ? ' · ' + levels[a.level].label + ', ' + (PLACE_LABELS[a.place] || '').toLowerCase() : ''}${a.hours ? ' · ' + a.hours + ' ч' : ''}<br />
+    ${formatDate(a.date)} · ${escapeHtml(a.period || '')}
+    ${a.proofUrl ? `<br /><a href="${escapeHtml(a.proofUrl)}" target="_blank" rel="noopener noreferrer">Открыть подтверждающий документ</a>` : ''}`;
+  document.getElementById('v-points').value = a.points;
+  document.getElementById('v-comment').value = '';
+  openModal('verify-modal');
+}
+
+// ================= (4) журнал начислений =================
+async function renderAwards() {
+  const status = document.getElementById('awards-filter').value;
+  const list = await api.achievements.listAll({ status });
+  document.getElementById('awards-tbody').innerHTML = list.length ? list.map((a) => `
+    <tr>
+      <td>${escapeHtml(a.student ? a.student.fullName : '—')}</td>
+      <td>${escapeHtml(a.title)}</td>
+      <td class="muted">${SOURCE_LABELS[a.source] || a.source}</td>
+      <td class="num-strong">${a.points}</td>
+      <td class="muted">${escapeHtml(a.teacherComment || '—')}</td>
+      <td><div class="flex-row" style="flex-wrap:nowrap;">
+        ${a.status === 'approved' ? `<button class="btn btn--danger btn--small" data-revoke="${a.id}">${icon('undo')}Отозвать</button>` : ''}
+        <button class="btn btn--outline btn--small" data-history="${a.id}" aria-label="История">${icon('history')}</button>
+      </div></td>
+    </tr>`).join('') : '<tr><td colspan="6" class="empty-state">Записей нет.</td></tr>';
+}
+
+async function showHistory(achievementId) {
+  const log = await api.achievements.history(achievementId);
+  document.getElementById('history-body').innerHTML = log.length ? `
+    <table class="data-table"><thead><tr><th>Когда</th><th>Действие</th><th>Баллы</th><th>Причина</th></tr></thead><tbody>
+    ${log.map((l) => `<tr><td class="muted">${new Date(l.created_at).toLocaleString('ru-RU')}</td><td>${LOG_LABELS[l.action] || l.action}</td>
+      <td>${l.points_before ?? '—'} → ${l.points_after ?? '—'}</td><td class="muted">${escapeHtml(l.reason || '')}</td></tr>`).join('')}
+    </tbody></table>` : '<div class="empty-state">История пуста.</div>';
+  openModal('history-modal');
+}
+
+// ================= (5) ученики =================
+async function renderStudents() {
+  const [students, rating] = await Promise.all([api.users.listStudents(), api.rating.compute()]);
+  const totals = Object.fromEntries(rating.map((r) => [r.userId, r.total]));
+  document.getElementById('students-tbody').innerHTML = students.length ? students.map((s) => `
+    <tr>
+      <td>${escapeHtml(s.fullName)}</td>
+      <td>${escapeHtml(s.className || '—')}</td>
+      <td class="muted">${escapeHtml(s.email)}</td>
+      <td>${s.telegramLinked ? '<span class="badge badge--approved">Подключён</span>' : '<span class="muted">—</span>'}</td>
+      <td class="num-strong">${totals[s.id] || 0}</td>
+      <td><button class="btn btn--outline btn--small" data-add-for="${s.id}" data-name="${escapeHtml(s.fullName)}">${icon('plus')}Начислить</button></td>
+    </tr>`).join('') : '<tr><td colspan="6" class="empty-state">Одобренных учеников пока нет.</td></tr>';
+}
+
+function syncAddForm() {
+  const category = document.getElementById('a-category').value;
+  document.getElementById('a-level-row').hidden = !fillLevelOptions(document.getElementById('a-level'), category);
+  document.getElementById('a-hours-field').hidden = category !== 'volunteer';
+  updateAddPreview();
+}
+function updateAddPreview() {
+  document.getElementById('a-points').textContent = calcAchievementPoints({
+    category: document.getElementById('a-category').value,
+    level: document.getElementById('a-level').value,
+    place: document.getElementById('a-place').value,
+    hours: document.getElementById('a-hours').value,
   });
 }
 
-function openVerifyModal(id, pendingList, users) {
-  const a = pendingList.find((x) => x.id === id);
-  const u = users.find((x) => x.id === a.userId);
-  CURRENT_VERIFY_ID = id;
-  document.getElementById('verify-summary').innerHTML = `
-    <strong>${escapeHtml(a.title)}</strong><br />
-    Ученик: ${escapeHtml(u ? `${u.lastName} ${u.firstName}` : '—')} · ${CATEGORY_LABELS[a.category]}${a.subject ? ' · ' + SUBJECT_LABELS[a.subject] : ''}<br />
-    ${a.description ? escapeHtml(a.description) + '<br />' : ''}Дата: ${formatDate(a.date)} · Период: ${escapeHtml(a.period || '—')}`;
-  document.getElementById('verify-points').value = a.points;
-  document.getElementById('verify-comment').value = '';
-  document.getElementById('verify-overlay').classList.remove('hidden');
+// ================= (6) рейтинг =================
+async function renderRating() {
+  const rows = await api.rating.compute({
+    className: document.getElementById('t-class').value,
+    subject: document.getElementById('t-subject').value,
+    period: document.getElementById('t-period').value,
+  });
+  LAST_RATING = rows;
+  const classSelect = document.getElementById('t-class');
+  if (classSelect.options.length === 1) {
+    [...new Set(rows.map((r) => r.className).filter(Boolean))].sort()
+      .forEach((c) => classSelect.insertAdjacentHTML('beforeend', `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`));
+  }
+  document.getElementById('t-rating-tbody').innerHTML = rows.length ? rows.map((r) => `
+    <tr>
+      <td><span class="rank ${r.rank <= 3 ? 'rank--' + r.rank : ''}">${r.rank}</span></td>
+      <td>${escapeHtml(r.name)}</td><td>${escapeHtml(r.className || '—')}</td>
+      <td>${r.physics}</td><td>${r.math}</td><td>${r.cs}</td><td class="num-strong">${r.total}</td>
+    </tr>`).join('') : '<tr><td colspan="7" class="empty-state">Нет данных.</td></tr>';
 }
-function closeVerifyModal() { document.getElementById('verify-overlay').classList.add('hidden'); }
 
-function initVerifyFlow() {
-  document.getElementById('verify-cancel').addEventListener('click', closeVerifyModal);
-  document.getElementById('verify-overlay').addEventListener('click', (e) => {
-    if (e.target.id === 'verify-overlay') closeVerifyModal();
+// ================= обработчики =================
+function wireActions() {
+  document.body.addEventListener('click', async (e) => {
+    const t = (sel) => e.target.closest(sel);
+    let el;
+
+    if ((el = t('[data-approve]'))) {
+      const role = document.querySelector(`[data-role-for="${el.dataset.approve}"]`).value;
+      el.disabled = true;
+      if (await guard(() => api.registrations.approve(el.dataset.approve, role, el.dataset.class), `Заявка принята: ${ROLE_LABELS[role].toLowerCase()}`)) {
+        await Promise.all([renderRegistrations(), renderStudents()]);
+      } else el.disabled = false;
+    } else if ((el = t('[data-reject]'))) {
+      const reason = await askReason('Отклонить заявку', 'Причину увидит человек, когда попробует войти.', 'Отклонить');
+      if (reason && await guard(() => api.registrations.reject(el.dataset.reject, reason), 'Заявка отклонена')) await renderRegistrations();
+    } else if ((el = t('[data-participants]'))) {
+      await guard(() => openParticipants(Number(el.dataset.participants)));
+    } else if ((el = t('[data-edit-contest]'))) {
+      openContestModal(CONTESTS.find((c) => c.id === Number(el.dataset.editContest)));
+    } else if ((el = t('[data-delete-contest]'))) {
+      // eslint-disable-next-line no-alert
+      if (confirm('Удалить конкурс? Заявки на участие удалятся, а уже начисленные баллы останутся в истории.')) {
+        if (await guard(() => api.contests.remove(Number(el.dataset.deleteContest)), 'Конкурс удалён')) await renderContests();
+      }
+    } else if ((el = t('[data-save-result]'))) {
+      const id = Number(el.dataset.saveResult);
+      const result = document.querySelector(`[data-result-for="${id}"]`).value;
+      let reason = null;
+      if (el.dataset.hadAward === '1') {
+        reason = await askReason('Изменить результат', 'Ранее начисленная награда за этот конкурс будет отозвана. Укажите причину — она сохранится в истории.', 'Изменить и отозвать');
+        if (!reason) return;
+      }
+      el.disabled = true;
+      if (await guard(() => api.participations.setResult(id, result, reason), 'Результат сохранён')) {
+        await Promise.all([renderParticipants(), renderContests(), renderAwards()]);
+      } else el.disabled = false;
+    } else if ((el = t('[data-verify]'))) {
+      openVerify(Number(el.dataset.verify));
+    } else if ((el = t('[data-revoke]'))) {
+      const reason = await askReason('Отозвать награду', 'Баллы уйдут из рейтинга ученика, запись останется в истории с вашей причиной.', 'Отозвать');
+      if (reason && await guard(() => api.achievements.revoke(Number(el.dataset.revoke), reason), 'Награда отозвана')) {
+        await Promise.all([renderAwards(), renderStudents()]);
+      }
+    } else if ((el = t('[data-history]'))) {
+      await guard(() => showHistory(Number(el.dataset.history)));
+    } else if ((el = t('[data-add-for]'))) {
+      document.getElementById('add-form').reset();
+      document.getElementById('a-user').value = el.dataset.addFor;
+      document.getElementById('add-student').textContent = el.dataset.name;
+      document.getElementById('a-date').value = todayISO();
+      document.getElementById('a-period').value = periodOf();
+      syncAddForm();
+      openModal('add-modal');
+    }
   });
 
   async function decide(status) {
-    const comment = document.getElementById('verify-comment').value.trim();
-    if (status === 'rejected' && !comment) {
-      showToast('Укажите комментарий — почему достижение отклонено', true);
-      return;
+    const comment = document.getElementById('v-comment').value.trim();
+    if (status === 'rejected' && !comment) { showToast('Укажите причину отклонения', true); return; }
+    if (await guard(() => api.achievements.verify(CURRENT_VERIFY.id, { status, points: document.getElementById('v-points').value, comment }),
+      status === 'approved' ? 'Достижение подтверждено' : 'Достижение отклонено')) {
+      closeModal('verify-modal');
     }
-    try {
-      await api.achievements.verify(CURRENT_VERIFY_ID, {
-        status,
-        teacherComment: comment,
-        verifiedBy: CURRENT_TEACHER.id,
-        points: document.getElementById('verify-points').value,
-      });
-      closeVerifyModal();
-      showToast(status === 'approved' ? 'Достижение подтверждено' : 'Достижение отклонено');
-      await Promise.all([renderVerifyQueue(), renderStudents(), renderTeacherRating()]);
-    } catch (err) {
-      showToast(err.message, true);
-    }
+    await Promise.all([renderVerify(), renderAwards(), renderStudents()]);
   }
-  document.getElementById('verify-approve').addEventListener('click', () => decide('approved'));
-  document.getElementById('verify-reject').addEventListener('click', () => decide('rejected'));
-}
+  document.getElementById('v-approve').addEventListener('click', () => decide('approved'));
+  document.getElementById('v-reject').addEventListener('click', () => decide('rejected'));
 
-// ================= Ученики + добавление достижения =================
-
-async function renderStudents() {
-  const [students, allAch] = await Promise.all([
-    api.users.list({ role: 'student' }),
-    api.achievements.list({ status: 'approved' }),
-  ]);
-  const tbody = document.getElementById('students-tbody');
-  tbody.innerHTML = students.map((s) => {
-    const mine = allAch.filter((a) => a.userId === s.id);
-    const points = mine.reduce((sum, a) => sum + a.points, 0);
-    return `
-      <tr>
-        <td>${escapeHtml(`${s.lastName} ${s.firstName}`)}</td>
-        <td>${escapeHtml(s.className || '—')}</td>
-        <td>${mine.length}</td>
-        <td><strong>${points}</strong></td>
-        <td><button class="btn btn--ghost btn--small" data-add-for="${s.id}">${icon('plus-circle')}Добавить</button></td>
-      </tr>`;
-  }).join('');
-
-  tbody.querySelectorAll('[data-add-for]').forEach((btn) => {
-    btn.addEventListener('click', () => openTeacherAddModal(btn.dataset.addFor, students));
-  });
-}
-
-function syncTeacherAddFields() {
-  const category = document.getElementById('ta-category').value;
-  const levels = category === 'olympiad' ? OLYMPIAD_LEVELS : category === 'project' ? PROJECT_LEVELS : null;
-  document.getElementById('ta-level-row').style.display = levels ? 'flex' : 'none';
-  document.getElementById('ta-hours-field').style.display = category === 'volunteer' ? 'block' : 'none';
-  if (levels) {
-    document.getElementById('ta-level').innerHTML = Object.entries(levels).map(([key, v]) => `<option value="${key}">${v.label}</option>`).join('');
-  }
-  updateTeacherAddPreview();
-}
-function updateTeacherAddPreview() {
-  const points = calcAchievementPoints({
-    category: document.getElementById('ta-category').value,
-    level: document.getElementById('ta-level').value,
-    place: document.getElementById('ta-place').value,
-    hours: document.getElementById('ta-hours').value,
-  });
-  document.getElementById('ta-points-preview').textContent = points;
-}
-
-function openTeacherAddModal(userId, students) {
-  const s = students.find((x) => x.id === userId);
-  document.getElementById('ta-user-id').value = userId;
-  document.getElementById('ta-student-name').textContent = `${s.lastName} ${s.firstName} · ${s.className || ''}`;
-  document.getElementById('teacher-add-form').reset();
-  document.getElementById('ta-user-id').value = userId;
-  document.getElementById('ta-date').value = new Date().toISOString().slice(0, 10);
-  syncTeacherAddFields();
-  document.getElementById('teacher-add-overlay').classList.remove('hidden');
-}
-function closeTeacherAddModal() { document.getElementById('teacher-add-overlay').classList.add('hidden'); }
-
-function initTeacherAddFlow() {
-  document.getElementById('teacher-add-cancel').addEventListener('click', closeTeacherAddModal);
-  document.getElementById('teacher-add-overlay').addEventListener('click', (e) => {
-    if (e.target.id === 'teacher-add-overlay') closeTeacherAddModal();
-  });
-  document.getElementById('ta-category').addEventListener('change', syncTeacherAddFields);
-  document.getElementById('ta-level').addEventListener('change', updateTeacherAddPreview);
-  document.getElementById('ta-place').addEventListener('change', updateTeacherAddPreview);
-  document.getElementById('ta-hours').addEventListener('input', updateTeacherAddPreview);
-
-  document.getElementById('teacher-add-form').addEventListener('submit', async (e) => {
+  document.getElementById('new-contest-btn').addEventListener('click', () => openContestModal(null));
+  document.getElementById('c-category').addEventListener('change', () => syncContestLevel());
+  document.getElementById('contest-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    try {
-      await api.achievements.createByTeacher({
-        userId: document.getElementById('ta-user-id').value,
-        category: document.getElementById('ta-category').value,
-        subject: document.getElementById('ta-subject').value || null,
-        level: document.getElementById('ta-level').value || null,
-        place: document.getElementById('ta-place').value || null,
-        hours: document.getElementById('ta-hours').value || null,
-        title: document.getElementById('ta-title').value.trim(),
-        date: document.getElementById('ta-date').value,
-        period: document.getElementById('ta-period').value.trim(),
-      }, CURRENT_TEACHER.id);
-      closeTeacherAddModal();
-      showToast('Достижение добавлено и подтверждено');
-      await Promise.all([renderStudents(), renderTeacherRating()]);
-    } catch (err) {
-      showToast(err.message, true);
+    const id = document.getElementById('c-id').value;
+    const data = {
+      title: document.getElementById('c-title').value.trim(),
+      description: document.getElementById('c-description').value.trim(),
+      category: document.getElementById('c-category').value,
+      level: document.getElementById('c-level').value,
+      subject: document.getElementById('c-subject').value,
+      status: document.getElementById('c-status').value,
+      startDate: document.getElementById('c-start').value,
+      endDate: document.getElementById('c-end').value,
+      period: document.getElementById('c-period').value,
+    };
+    if (data.startDate && data.endDate && data.endDate < data.startDate) { showToast('Окончание не может быть раньше начала', true); return; }
+    if (await guard(() => (id ? api.contests.update(Number(id), data) : api.contests.create(data)), id ? 'Конкурс обновлён' : 'Конкурс опубликован')) {
+      closeModal('contest-modal');
+      await renderContests();
     }
   });
-}
 
-// ================= Рейтинг =================
+  document.getElementById('a-category').addEventListener('change', syncAddForm);
+  ['a-level', 'a-place'].forEach((id) => document.getElementById(id).addEventListener('change', updateAddPreview));
+  document.getElementById('a-hours').addEventListener('input', updateAddPreview);
+  document.getElementById('a-date').addEventListener('change', (e) => { document.getElementById('a-period').value = periodOf(e.target.value); });
+  document.getElementById('add-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const category = document.getElementById('a-category').value;
+    const hasLevel = category === 'olympiad' || category === 'project';
+    if (await guard(() => api.achievements.createByTeacher({
+      userId: document.getElementById('a-user').value,
+      category,
+      subject: document.getElementById('a-subject').value,
+      level: hasLevel ? document.getElementById('a-level').value : null,
+      place: hasLevel ? document.getElementById('a-place').value : null,
+      hours: category === 'volunteer' ? document.getElementById('a-hours').value : null,
+      title: document.getElementById('a-title').value.trim(),
+      date: document.getElementById('a-date').value,
+      period: document.getElementById('a-period').value,
+    }), 'Достижение начислено')) {
+      closeModal('add-modal');
+      await Promise.all([renderStudents(), renderAwards()]);
+    }
+  });
 
-async function populateTeacherClassFilter() {
-  const students = await api.users.list({ role: 'student' });
-  const classes = [...new Set(students.map((s) => s.className).filter(Boolean))].sort();
-  document.getElementById('teacher-rating-class').innerHTML =
-    '<option value="">Все классы</option>' + classes.map((c) => `<option value="${c}">${c}</option>`).join('');
-}
-
-let LAST_RATING_ROWS = [];
-
-async function renderTeacherRating() {
-  const className = document.getElementById('teacher-rating-class').value;
-  const subject = document.getElementById('teacher-rating-subject').value;
-  const rows = await api.rating.compute({ className, subject: subject || undefined });
-  LAST_RATING_ROWS = rows;
-  const tbody = document.getElementById('teacher-rating-tbody');
-  if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Нет данных.</td></tr>';
-    return;
-  }
-  tbody.innerHTML = rows.map((r) => {
-    const pillClass = r.rank === 1 ? 'rank-pill--gold' : r.rank === 2 ? 'rank-pill--silver' : r.rank === 3 ? 'rank-pill--bronze' : '';
-    return `
-      <tr ${r.rank <= 3 ? 'class="rank-top"' : ''}>
-        <td><span class="rank-pill ${pillClass}">${r.rank}</span></td>
-        <td>${escapeHtml(r.name)}</td>
-        <td>${escapeHtml(r.className || '—')}</td>
-        <td>${r.physics}</td>
-        <td>${r.math}</td>
-        <td>${r.cs}</td>
-        <td><strong>${r.total}</strong></td>
-      </tr>`;
-  }).join('');
-}
-
-function initRatingTab() {
-  document.getElementById('teacher-rating-class').addEventListener('change', renderTeacherRating);
-  document.getElementById('teacher-rating-subject').addEventListener('change', renderTeacherRating);
-  document.getElementById('download-rating-csv').addEventListener('click', () => {
-    if (!LAST_RATING_ROWS.length) return;
-    const rows = LAST_RATING_ROWS.map((r) => ({
-      Место: r.rank, Ученик: r.name, Класс: r.className, Физика: r.physics, Математика: r.math, Информатика: r.cs, Итого: r.total,
-    }));
-    downloadBlob(`rating_${Date.now()}.csv`, api.reports.toCSV(rows), 'text/csv;charset=utf-8');
+  document.getElementById('awards-filter').addEventListener('change', () => guard(renderAwards));
+  ['t-class', 't-subject', 't-period'].forEach((id) => document.getElementById(id).addEventListener('change', () => guard(renderRating)));
+  document.getElementById('rating-csv').addEventListener('click', () => {
+    if (!LAST_RATING.length) return;
+    const rows = LAST_RATING.map((r) => ({ Место: r.rank, Ученик: r.name, Класс: r.className, Физика: r.physics, Математика: r.math, Информатика: r.cs, Итого: r.total }));
+    downloadBlob(`rating_${todayISO()}.csv`, api.reports.toCSV(rows), 'text/csv;charset=utf-8');
   });
 }
 
-// ================= init =================
 (async function init() {
-  CURRENT_TEACHER = await requireRole('teacher');
-  if (!CURRENT_TEACHER) return;
-  initTabs();
-  initRegistrationFlow();
-  initVerifyFlow();
-  initTeacherAddFlow();
-  initRatingTab();
-  await populateTeacherClassFilter();
-  await Promise.all([renderRegistrations(), renderVerifyQueue(), renderStudents(), renderTeacherRating()]);
+  ME = await requireRole('teacher');
+  if (!ME) return;
+  document.getElementById('c-period').innerHTML = periodSelectHtml(true);
+  document.getElementById('a-period').innerHTML = periodSelectHtml(true);
+  document.getElementById('t-period').innerHTML = '<option value="">За всё время</option>' + periodSelectHtml(false);
+  // вкладки перечитывают базу: данные могли поменять другой учитель, бот или соседняя вкладка
+  const RENDER = { registrations: renderRegistrations, contests: renderContests, verify: renderVerify,
+    awards: renderAwards, students: renderStudents, rating: renderRating };
+  initTabs((tab) => RENDER[tab] && guard(RENDER[tab]));
+  wireModalClose();
+  wireActions();
+  await guard(() => Promise.all([renderRegistrations(), renderContests(), renderVerify(), renderAwards(), renderStudents(), renderRating()]));
 })();

@@ -1,82 +1,86 @@
 /**
- * constellation.js — визуализация портфолио как карты созвездий.
+ * constellation.js — портфолио как карта созвездий.
  *
- * Сигнатурный приём интерфейса: каждое ПОДТВЕРЖДЁННОЕ достижение — звезда
- * в одном из четырёх кластеров (физика / математика / информатика /
- * проекты и волонтёрство), размер и яркость звезды растут вместе с
- * баллами, звёзды внутри кластера соединены линиями как созвездие.
- * Позиции детерминированы по id достижения — карта не "прыгает" между
- * перерисовками с теми же данными.
+ * Каждое ПОДТВЕРЖДЁННОЕ достижение — четырёхлучевая звезда-искра в
+ * одном из четырёх кластеров (физика / математика / информатика /
+ * проекты и волонтёрство). Размер звезды растёт с баллами, звёзды
+ * кластера соединены линией. Позиции детерминированы по id, поэтому
+ * карта не «прыгает» между перерисовками. Отозванные и непроверенные
+ * достижения на карту не попадают.
  */
 
 const CONSTELLATION_CLUSTERS = [
-  { key: 'physics', label: 'Физика', color: 'var(--subj-physics)', cx: 0.16 },
-  { key: 'math', label: 'Математика', color: 'var(--subj-math)', cx: 0.40 },
-  { key: 'cs', label: 'Информатика', color: 'var(--subj-cs)', cx: 0.64 },
-  { key: 'other', label: 'Проекты и волонтёрство', color: '#9aa3c7', cx: 0.88 },
+  { key: 'physics', label: 'Физика', color: 'var(--subj-physics)', cx: 0.15 },
+  { key: 'math', label: 'Математика', color: 'var(--subj-math)', cx: 0.39 },
+  { key: 'cs', label: 'Информатика', color: 'var(--subj-cs)', cx: 0.63 },
+  { key: 'other', label: 'Проекты и волонтёрство', color: 'var(--subj-other)', cx: 0.86 },
 ];
 
 function hashToUnit(str) {
-  let h = 0;
-  for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
-  return (h % 1000) / 1000;
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 16777619) >>> 0;
+  return (h % 10000) / 10000;
 }
 
 function clusterKeyFor(a) {
-  if (a.subject === 'physics') return 'physics';
-  if (a.subject === 'math') return 'math';
-  if (a.subject === 'cs') return 'cs';
-  return 'other';
+  return ['physics', 'math', 'cs'].includes(a.subject) ? a.subject : 'other';
+}
+
+/** Четырёхлучевая звезда (как «искры» в референсе) радиусом r в точке x,y. */
+function sparklePath(x, y, r) {
+  const k = r * 0.16;
+  return `M${x},${y - r} C${x + k},${y - k} ${x + k},${y - k} ${x + r},${y} C${x + k},${y + k} ${x + k},${y + k} ${x},${y + r} C${x - k},${y + k} ${x - k},${y + k} ${x - r},${y} C${x - k},${y - k} ${x - k},${y - k} ${x},${y - r}Z`;
 }
 
 function renderConstellation(rootEl, achievements) {
-  const W = 760, H = 300;
+  const W = 760, H = 320;
   const approved = achievements.filter((a) => a.status === 'approved');
 
   if (!approved.length) {
-    rootEl.innerHTML = '<div class="constellation__empty">Карта пока пуста — как только учитель подтвердит первое достижение, здесь зажжётся звезда.</div>';
+    rootEl.innerHTML = '<div class="constellation__empty">Карта пока пуста. Как только учитель подтвердит первое достижение, здесь зажжётся звезда.</div>';
     return;
   }
 
-  const grouped = {};
-  CONSTELLATION_CLUSTERS.forEach((c) => { grouped[c.key] = []; });
+  const grouped = Object.fromEntries(CONSTELLATION_CLUSTERS.map((c) => [c.key, []]));
   approved.forEach((a) => grouped[clusterKeyFor(a)].push(a));
-
   const maxPoints = Math.max(...approved.map((a) => a.points), 1);
-  let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Карта созвездий: ${approved.length} подтверждённых достижений">`;
+
+  // фоновая «звёздная пыль» — детерминированная, чтобы не мерцала при перерисовке
+  for (let i = 0; i < 60; i++) {
+    const x = hashToUnit(`dx${i}`) * W;
+    const y = hashToUnit(`dy${i}`) * H;
+    const r = 0.6 + hashToUnit(`dr${i}`) * 1.1;
+    svg += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(2)}" fill="#fff" opacity="${(0.12 + hashToUnit(`do${i}`) * 0.3).toFixed(2)}"/>`;
+  }
 
   CONSTELLATION_CLUSTERS.forEach((cluster) => {
     const items = grouped[cluster.key];
     if (!items.length) return;
     const baseX = cluster.cx * W;
-    const points = items.map((a, idx) => {
-      const seedX = hashToUnit(a.id + 'x');
-      const seedY = hashToUnit(a.id + 'y');
-      const angle = (idx / items.length) * Math.PI * 2 + seedX * 0.8;
-      const radius = 34 + seedY * 58;
-      const x = baseX + Math.cos(angle) * radius * 0.55;
-      const y = H / 2 + Math.sin(angle) * radius;
-      const r = 4 + (a.points / maxPoints) * 9;
-      return { a, x, y, r };
+    const stars = items.map((a, idx) => {
+      const id = String(a.id);
+      const angle = (idx / items.length) * Math.PI * 2 + hashToUnit(id + 'x') * 0.9;
+      const radius = 30 + hashToUnit(id + 'y') * 64;
+      return {
+        a,
+        x: baseX + Math.cos(angle) * radius * 0.6,
+        y: H / 2 + Math.sin(angle) * radius,
+        r: 9 + (a.points / maxPoints) * 15,
+        delay: (hashToUnit(id + 'tw') * 3.2).toFixed(2),
+      };
     });
 
-    // линии созвездия: соединяем звёзды по порядку (ломаная) — читается
-    // как настоящее созвездие, не как облако точек.
-    if (points.length > 1) {
-      const path = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
-      svg += `<path d="${path}" fill="none" stroke="${cluster.color}" stroke-width="1" opacity="0.35"/>`;
+    if (stars.length > 1) {
+      const d = stars.map((s, i) => `${i ? 'L' : 'M'}${s.x.toFixed(1)},${s.y.toFixed(1)}`).join(' ');
+      svg += `<path d="${d}" fill="none" stroke="${cluster.color}" stroke-width="1.2" stroke-dasharray="3 5" opacity="0.5"/>`;
     }
-
-    points.forEach(({ a, x, y, r }) => {
-      const title = `${escapeHtml(a.title)} · ${a.points} баллов`;
-      const delay = (hashToUnit(a.id + 'twinkle') * 3.2).toFixed(2);
-      svg += `<circle class="constellation__star" style="--twinkle-delay:${delay}s" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="${cluster.color}" opacity="0.92"><title>${title}</title></circle>`;
-      svg += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(r + 4).toFixed(1)}" fill="${cluster.color}" opacity="0.14"/>`;
+    stars.forEach(({ a, x, y, r, delay }) => {
+      svg += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(r * 0.9).toFixed(1)}" fill="${cluster.color}" opacity="0.12"/>`;
+      svg += `<path class="constellation__star" style="--twinkle-delay:${delay}s" d="${sparklePath(x, y, r)}" fill="${cluster.color}"><title>${escapeHtml(a.title)} · ${pointsWord(a.points)}</title></path>`;
     });
-
-    svg += `<text class="constellation__label" x="${baseX.toFixed(1)}" y="${H - 14}" text-anchor="middle" fill="rgba(255,255,255,.55)" font-size="11" font-family="Manrope, sans-serif" font-weight="700" letter-spacing="0.03em">${cluster.label.toUpperCase()}</text>`;
   });
 
-  svg += '</svg>';
-  rootEl.innerHTML = svg;
+  rootEl.innerHTML = svg + '</svg>';
 }

@@ -3,157 +3,156 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Моя карта — Портал достижений</title>
+  <title>Кабинет ученика — Портал достижений</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
-<body>
-  <nav class="navbar no-print">
+<body class="glow-page">
+  <nav class="navbar">
     <div class="container">
-      <div class="navbar__brand"><svg class="icon"><use href="#icon-orbit"></use></svg>Портал достижений</div>
-      <div class="navbar__links">
-        <a href="#" data-tab-link="map" class="active">Моя карта</a>
-        <a href="#" data-tab-link="achievements">Достижения</a>
-        <a href="#" data-tab-link="rating">Рейтинг</a>
-      </div>
+      <a href="index.html" class="navbar__brand"><svg class="icon"><use href="#icon-logo"></use></svg>Портал достижений</a>
       <div id="navbar-user"></div>
     </div>
   </nav>
 
   <main class="container">
-
-    <!-- ===================== Моя карта ===================== -->
-    <section class="section tab-panel active" id="tab-map">
-      <div class="flex-between">
-        <h2 class="section__title"><svg class="icon"><use href="#icon-orbit"></use></svg>Моя карта</h2>
-        <button class="btn btn--ghost btn--small no-print" id="print-portfolio-btn"><svg class="icon"><use href="#icon-print"></use></svg>Печать портфолио</button>
+    <div class="page-head">
+      <div>
+        <h1>Моя <span class="accent">карта</span></h1>
+        <p id="student-subtitle"></p>
       </div>
-      <p class="section__subtitle">Каждая подтверждённая звезда — одно достижение. Размер и яркость растут вместе с баллами.</p>
+      <div class="flex-row no-print">
+        <button class="btn btn--outline" id="telegram-btn"><svg class="icon"><use href="#icon-telegram"></use></svg><span>Подключить Telegram</span></button>
+        <button class="btn btn--outline" id="print-btn"><svg class="icon"><use href="#icon-print"></use></svg>Портфолио в PDF</button>
+      </div>
+    </div>
 
-      <div class="constellation" id="constellation-wrap">
+    <div class="tabs no-print">
+      <button class="tab-btn active" data-tab="map">Карта и портфолио</button>
+      <button class="tab-btn" data-tab="contests">Конкурсы <span class="count" id="count-contests" hidden></span></button>
+      <button class="tab-btn" data-tab="achievements">Достижения</button>
+      <button class="tab-btn" data-tab="rating">Рейтинг</button>
+    </div>
+
+    <!-- ===================== Карта и портфолио ===================== -->
+    <section class="tab-panel active" id="panel-map">
+      <div class="constellation">
         <div class="constellation__legend">
-          <span class="constellation__legend-item"><span class="constellation__legend-dot" style="background:var(--subj-physics)"></span>Физика</span>
-          <span class="constellation__legend-item"><span class="constellation__legend-dot" style="background:var(--subj-math)"></span>Математика</span>
-          <span class="constellation__legend-item"><span class="constellation__legend-dot" style="background:var(--subj-cs)"></span>Информатика</span>
-          <span class="constellation__legend-item"><span class="constellation__legend-dot" style="background:#9aa3c7"></span>Проект / волонтёрство</span>
+          <span class="subject subject--physics">Физика</span>
+          <span class="subject subject--math">Математика</span>
+          <span class="subject subject--cs">Информатика</span>
+          <span class="subject">Проекты и волонтёрство</span>
         </div>
-        <div id="constellation-svg-root"></div>
+        <div id="constellation-root"></div>
       </div>
-
       <div class="stat-row" id="portfolio-stats"></div>
+
+      <div class="card" style="margin-top:16px;">
+        <h2 class="card-title">Портфолио</h2>
+        <p class="card-sub">Сводка по категориям — только подтверждённые достижения. Кнопка «Портфолио в PDF» печатает эту страницу или сохраняет её в PDF.</p>
+        <div class="stat-row" id="category-summary" style="margin-top:0;"></div>
+        <div class="table-wrap" style="margin-top:16px;">
+          <table class="data-table">
+            <thead><tr><th>Достижение</th><th>Категория</th><th>Предмет</th><th>Период</th><th>Баллы</th><th class="no-print"></th></tr></thead>
+            <tbody id="portfolio-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== Конкурсы ===================== -->
+    <section class="tab-panel" id="panel-contests">
+      <div class="contest-grid" id="contest-grid"></div>
+      <div class="card" style="margin-top:22px;">
+        <h2 class="card-title">Мои результаты</h2>
+        <p class="card-sub">Учитель выставляет результат после конкурса: призовое место начисляет баллы и открывает диплом.</p>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Конкурс</th><th>Результат</th><th>Баллы</th><th>Комментарий</th><th></th></tr></thead>
+            <tbody id="my-results-tbody"></tbody>
+          </table>
+        </div>
+      </div>
     </section>
 
     <!-- ===================== Достижения ===================== -->
-    <section class="section tab-panel" id="tab-achievements">
-      <div class="flex-between">
-        <h2 class="section__title"><svg class="icon"><use href="#icon-star"></use></svg>Мои достижения</h2>
-        <button class="btn btn--star btn--small no-print" id="add-achievement-btn"><svg class="icon"><use href="#icon-plus-circle"></use></svg>Добавить достижение</button>
-      </div>
-      <p class="section__subtitle">Статус, баллы и комментарий учителя по каждой заявке.</p>
-      <div class="card table-wrap">
-        <table class="data-table">
-          <thead><tr><th>Достижение</th><th>Категория</th><th>Предмет</th><th>Баллы</th><th>Статус</th><th>Комментарий</th></tr></thead>
-          <tbody id="achievements-tbody"></tbody>
-        </table>
-        <div class="empty-state" id="achievements-empty" style="display:none;">Пока нет достижений — добавьте первое!</div>
+    <section class="tab-panel" id="panel-achievements">
+      <div class="card">
+        <div class="flex-between">
+          <div>
+            <h2 class="card-title">Мои достижения</h2>
+            <p class="card-sub" style="margin:0;">Статус, баллы и комментарий учителя по каждой заявке.</p>
+          </div>
+          <button class="btn" id="add-achievement-btn"><svg class="icon"><use href="#icon-plus"></use></svg>Добавить достижение</button>
+        </div>
+        <div class="table-wrap" style="margin-top:16px;">
+          <table class="data-table">
+            <thead><tr><th>Достижение</th><th>Категория</th><th>Предмет</th><th>Баллы</th><th>Статус</th><th>Комментарий учителя</th><th></th></tr></thead>
+            <tbody id="achievements-tbody"></tbody>
+          </table>
+        </div>
       </div>
     </section>
 
     <!-- ===================== Рейтинг ===================== -->
-    <section class="section tab-panel" id="tab-rating">
-      <h2 class="section__title"><svg class="icon"><use href="#icon-chart"></use></svg>Рейтинг лицея</h2>
-      <p class="section__subtitle">Баллы считаются только по подтверждённым достижениям.</p>
+    <section class="tab-panel" id="panel-rating">
       <div class="card">
-        <div class="flex-row no-print" style="margin-bottom:16px;">
-          <div class="field" style="margin:0; min-width:160px;">
-            <label for="rating-class-filter">Класс</label>
-            <select id="rating-class-filter"><option value="">Все классы</option></select>
-          </div>
-          <div class="field" style="margin:0; min-width:160px;">
-            <label for="rating-subject-filter">Предмет</label>
-            <select id="rating-subject-filter">
-              <option value="">Все предметы</option>
-              <option value="physics">Физика</option>
-              <option value="math">Математика</option>
-              <option value="cs">Информатика</option>
-            </select>
-          </div>
+        <div class="flex-row" style="margin-bottom:6px;">
+          <div class="field" style="margin:0; min-width:150px;"><label for="r-class">Класс</label><select id="r-class"><option value="">Все классы</option></select></div>
+          <div class="field" style="margin:0; min-width:150px;"><label for="r-subject">Направление</label>
+            <select id="r-subject"><option value="">Все</option><option value="physics">Физика</option><option value="math">Математика</option><option value="cs">Информатика</option></select></div>
+          <div class="field" style="margin:0; min-width:210px;"><label for="r-period">Период</label><select id="r-period"></select></div>
+          <label class="flex-row muted" style="margin-top:22px; font-weight:700; font-size:14px;"><input type="checkbox" id="r-top10" checked /> Топ-10</label>
         </div>
         <div class="table-wrap">
-          <table class="data-table" id="rating-table">
+          <table class="data-table">
             <thead><tr><th>#</th><th>Ученик</th><th>Класс</th><th>Физика</th><th>Математика</th><th>Информатика</th><th>Итого</th></tr></thead>
             <tbody id="rating-tbody"></tbody>
           </table>
         </div>
       </div>
     </section>
-
   </main>
 
-  <!-- ===================== модалка: добавить достижение ===================== -->
-  <div class="modal-overlay hidden no-print" id="achievement-modal-overlay">
-    <div class="modal">
-      <h2>Новое достижение</h2>
-      <form id="achievement-form">
-        <div class="field">
-          <label for="ach-category">Категория</label>
-          <select id="ach-category" required>
-            <option value="academic">Академическое достижение</option>
-            <option value="olympiad">Олимпиада</option>
-            <option value="project">Проект</option>
-            <option value="volunteer">Волонтёрство</option>
-          </select>
-        </div>
-        <div class="field" id="ach-subject-field">
-          <label for="ach-subject">Предмет</label>
-          <select id="ach-subject">
-            <option value="">Общее / не связано с предметом</option>
-            <option value="physics">Физика</option>
-            <option value="math">Математика</option>
-            <option value="cs">Информатика</option>
-          </select>
+  <!-- ===================== модалка: новое достижение ===================== -->
+  <div class="modal-overlay hidden" id="ach-modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="ach-modal-title">
+      <h2 id="ach-modal-title">Новое достижение</h2>
+      <form id="ach-form">
+        <div class="field-row">
+          <div class="field"><label for="ach-category">Категория</label>
+            <select id="ach-category"><option value="academic">Академическое</option><option value="olympiad">Олимпиада</option><option value="project">Проект</option><option value="volunteer">Волонтёрство</option></select></div>
+          <div class="field"><label for="ach-subject">Предмет</label>
+            <select id="ach-subject"><option value="">Общее</option><option value="physics">Физика</option><option value="math">Математика</option><option value="cs">Информатика</option></select></div>
         </div>
         <div class="field-row" id="ach-level-row">
-          <div class="field">
-            <label for="ach-level">Уровень</label>
-            <select id="ach-level"></select>
-          </div>
-          <div class="field">
-            <label for="ach-place">Результат</label>
-            <select id="ach-place">
-              <option value="participant">Участие</option>
-              <option value="3">3 место</option>
-              <option value="2">2 место</option>
-              <option value="1">1 место</option>
-            </select>
-          </div>
+          <div class="field"><label for="ach-level">Уровень</label><select id="ach-level"></select></div>
+          <div class="field"><label for="ach-place">Результат</label>
+            <select id="ach-place"><option value="participant">Участие</option><option value="3">3 место</option><option value="2">2 место</option><option value="1">1 место</option></select></div>
         </div>
-        <div class="field" id="ach-hours-field" style="display:none;">
-          <label for="ach-hours">Количество часов</label>
-          <input id="ach-hours" type="number" min="1" step="1" />
-        </div>
-        <div class="field"><label for="ach-title">Название</label><input id="ach-title" required /></div>
-        <div class="field"><label for="ach-description">Описание (необязательно)</label><textarea id="ach-description" rows="2"></textarea></div>
+        <div class="field" id="ach-hours-field" hidden><label for="ach-hours">Часы волонтёрства</label><input id="ach-hours" type="number" min="1" step="1" /></div>
+        <div class="field"><label for="ach-title">Название</label><input id="ach-title" required maxlength="160" /></div>
+        <div class="field"><label for="ach-proof">Ссылка на грамоту или диплом (необязательно)</label><input id="ach-proof" type="url" placeholder="https://…" /></div>
         <div class="field-row">
           <div class="field"><label for="ach-date">Дата</label><input id="ach-date" type="date" required /></div>
-          <div class="field"><label for="ach-period">Период</label><input id="ach-period" placeholder="2025/2026, I четверть" required /></div>
+          <div class="field"><label for="ach-period">Период</label><select id="ach-period"></select></div>
         </div>
-        <div class="hint-box">
-          <strong>Баллы за это достижение: <span id="ach-points-preview">0</span></strong><br />
-          Баллы начисляются автоматически по прозрачной таблице и станут видны в рейтинге только после подтверждения учителем.
-        </div>
+        <div class="hint"><strong>Баллы: <span id="ach-points">0</span></strong> — считаются по таблице и попадут в рейтинг после проверки учителем.</div>
         <div class="modal__actions">
-          <button type="button" class="btn btn--ghost" id="achievement-cancel-btn">Отмена</button>
-          <button type="submit" class="btn btn--star">Отправить на проверку</button>
+          <button type="button" class="btn btn--outline" data-close>Отмена</button>
+          <button type="submit" class="btn">Отправить на проверку</button>
         </div>
       </form>
     </div>
   </div>
 
-  <script src="js/db.js"></script>
-  <script src="js/api.js"></script>
+  <script src="assets/vendor/supabase.js"></script>
+  <script src="js/config.js"></script>
   <script src="js/points.js"></script>
   <script src="js/common.js"></script>
+  <script src="js/api.js"></script>
   <script src="js/constellation.js"></script>
+  <script src="js/diploma.js"></script>
   <script src="js/student.js"></script>
 </body>
 </html>
