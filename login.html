@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Вход и регистрация — Портал достижений</title>
+  <title>Вход и регистрация · Портал достижений</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
@@ -41,14 +41,14 @@
           <button type="submit" class="btn btn--block">Войти<svg class="icon"><use href="#icon-arrow-right"></use></svg></button>
         </form>
         <button class="back-link" type="button" id="to-reset" style="margin-top:14px;">Забыли пароль?</button>
-        <p class="muted" style="margin-top:12px;">Нет аккаунта? <button class="back-link" type="button" id="to-register" style="display:inline;">Зарегистрируйтесь</button> — после одобрения учителем вход откроется.</p>
+        <p class="muted" style="margin-top:12px;">Нет аккаунта? <button class="back-link" type="button" id="to-register" style="display:inline;">Зарегистрируйтесь</button>. Войти получится после того, как учитель одобрит заявку.</p>
       </section>
 
       <!-- ===================== ВОССТАНОВЛЕНИЕ ПАРОЛЯ ===================== -->
       <section class="auth-step" id="panel-reset-1">
         <button class="back-link" type="button" data-to-login>&larr; Назад ко входу</button>
         <h2>Восстановление пароля</h2>
-        <p class="lead">Укажите e-mail, с которым регистрировались. Пришлём письмо со ссылкой — по ней вы зададите новый пароль.</p>
+        <p class="lead">Укажите e-mail, с которым регистрировались. Пришлём письмо со ссылкой, по ней можно будет задать новый пароль.</p>
         <form id="reset-email-form">
           <div class="field"><label for="reset-email">E-mail</label><input id="reset-email" type="email" autocomplete="email" required /></div>
           <p class="error-text" id="reset-email-error" role="alert"></p>
@@ -59,7 +59,7 @@
       <section class="auth-step" id="panel-reset-sent">
         <svg class="sparkle" style="width:48px;height:48px;margin-bottom:16px;" aria-hidden="true"><use href="#icon-sparkle"></use></svg>
         <h2>Проверьте почту</h2>
-        <p class="lead">Если аккаунт <strong id="reset-sent-email"></strong> существует, на него придёт письмо (загляните в «Спам»). Откройте ссылку из письма на этом же устройстве — сразу откроется форма нового пароля.</p>
+        <p class="lead">Если аккаунт <strong id="reset-sent-email"></strong> существует, на него придёт письмо (загляните в «Спам»). Откройте ссылку из письма на этом же устройстве, и сразу появится форма нового пароля.</p>
         <button class="btn btn--outline btn--block" type="button" data-to-login>К входу</button>
       </section>
 
@@ -78,7 +78,7 @@
       <section class="auth-step" id="panel-register-1">
         <div class="steps-dots"><span class="current"></span><span></span><span></span></div>
         <h2>Ваш e-mail</h2>
-        <p class="lead">Пришлём на почту код подтверждения.</p>
+        <p class="lead">Пришлём письмо, чтобы убедиться, что почта ваша.</p>
         <form id="register-email-form">
           <div class="field"><label for="reg-email">E-mail</label><input id="reg-email" type="email" autocomplete="email" placeholder="imya@lyceum.ru" required /></div>
           <p class="error-text" id="reg-email-error" role="alert"></p>
@@ -91,7 +91,7 @@
         <div class="steps-dots"><span class="done"></span><span class="current"></span><span></span></div>
         <button class="back-link" id="back-to-step1" type="button">&larr; Изменить e-mail</button>
         <h2>Подтвердите e-mail</h2>
-        <p class="lead">Отправили письмо на <strong id="code-email"></strong> (проверьте «Спам»). Нажмите в нём ссылку подтверждения — откроется следующий шаг. Если в письме есть код, введите его здесь.</p>
+        <p class="lead">Отправили письмо на <strong id="code-email"></strong> (проверьте «Спам»). Нажмите в нём ссылку, и откроется следующий шаг. Если в письме пришёл код, введите его здесь.</p>
         <form id="register-code-form">
           <div class="field"><label for="reg-code">Код</label><input id="reg-code" class="code-input" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="······" required /></div>
           <p class="error-text" id="reg-code-error" role="alert"></p>
@@ -122,7 +122,7 @@
       <section class="auth-step" id="panel-register-done">
         <svg class="sparkle" style="width:48px;height:48px;margin-bottom:16px;" aria-hidden="true"><use href="#icon-sparkle"></use></svg>
         <h2 id="done-title">Заявка отправлена</h2>
-        <p class="lead" id="done-text">Учитель рассмотрит её и назначит роль — ученик или учитель. После одобрения входите по e-mail и паролю.</p>
+        <p class="lead" id="done-text">Учитель посмотрит её и решит, ученик вы или учитель. После одобрения входите по e-mail и паролю.</p>
         <button class="btn btn--outline btn--block" id="register-done-back" type="button">К входу</button>
       </section>
     </main>

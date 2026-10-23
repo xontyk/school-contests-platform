@@ -92,8 +92,8 @@ async def require_profile(message: Message) -> dict | None:
     profile = await db.profile_by_chat(message.chat.id)
     if not profile:
         await message.answer(
-            "Аккаунт ещё не привязан.\n\nВойдите на сайт, откройте «Моя карта» → <b>Подключить Telegram</b> — "
-            f"бот привяжется автоматически.\n{esc(SITE_URL)}")
+            "Аккаунт ещё не привязан.\n\nВойдите на сайт, откройте «Моя карта» → <b>Подключить Telegram</b>, "
+            f"и бот привяжется сам.\n{esc(SITE_URL)}")
         return None
     return profile
 
@@ -132,7 +132,7 @@ async def cmd_rating(message: Message) -> None:
     row = school[me]
     klass = await db.rating(profile["class_name"]) if profile.get("class_name") else []
     class_place = next((i + 1 for i, r in enumerate(klass) if r["user_id"] == profile["id"]), None)
-    top = "\n".join(f"{i + 1}. {esc(r['full_name'])} ({esc(r['class_name'])}) — <b>{r['total']}</b>"
+    top = "\n".join(f"{i + 1}. {esc(r['full_name'])} ({esc(r['class_name'])}): <b>{r['total']}</b>"
                     for i, r in enumerate(school[:5]))
     await message.answer(
         f"<b>Ваш рейтинг</b>\n"
@@ -155,7 +155,7 @@ async def cmd_portfolio(message: Message) -> None:
     pending = sum(1 for a in items if a["status"] == "pending")
     lines = [f"{label}: {sum(1 for a in approved if a['category'] == key)} шт., "
              f"{sum(a['points'] for a in approved if a['category'] == key)} баллов" for key, label in CATEGORIES.items()]
-    recent = "\n".join(f"• {esc(a['title'])} — +{a['points']}" for a in approved[:5]) or "пока пусто"
+    recent = "\n".join(f"• {esc(a['title'])}: +{a['points']}" for a in approved[:5]) or "пока пусто"
     await message.answer("<b>Портфолио</b>\n" + "\n".join(lines) +
                          f"\n\nНа проверке: {pending}\n\n<b>Последние подтверждённые</b>\n{recent}")
 
@@ -170,7 +170,7 @@ async def cmd_contests(message: Message) -> None:
         return
     text = "\n\n".join(
         f"<b>{esc(c['title'])}</b>\n{SUBJECTS.get(c['subject'] or '', 'Общее')} · "
-        f"{LEVELS.get(c['category'], {}).get(c['level'], '')} · до {esc(c['end_date'] or '—')}"
+        f"{LEVELS.get(c['category'], {}).get(c['level'], '')} · {('до ' + esc(c['end_date'])) if c['end_date'] else 'без даты окончания'}"
         for c in contests)
     await message.answer(f"<b>Афиша конкурсов</b>\n\n{text}\n\nЗаявку подайте на сайте: {esc(SITE_URL)}")
 
@@ -260,7 +260,7 @@ async def add_hours(message: Message, state: FSMContext) -> None:
 async def add_title(message: Message, state: FSMContext) -> None:
     title = (message.text or "").strip()
     if not 3 <= len(title) <= 160:
-        await message.answer("Название — от 3 до 160 символов.")
+        await message.answer("Название должно быть от 3 до 160 символов.")
         return
     await state.update_data(title=title)
     data = await state.get_data()
@@ -285,8 +285,8 @@ async def add_send(cb: CallbackQuery, state: FSMContext) -> None:
         "date": today.isoformat(), "period": period_of(today),
     })
     await state.clear()
-    await cb.message.edit_text(f"Отправлено учителю. По таблице это <b>{row['points']}</b> баллов — "
-                               "они попадут в рейтинг после подтверждения. Я напишу, когда учитель решит.")
+    await cb.message.edit_text(f"Отправлено учителю. По таблице это <b>{row['points']}</b> баллов. "
+                               "В рейтинг они попадут после подтверждения. Я напишу, когда учитель решит.")
 
 
 # ---------------------------------------------------------------- уведомления

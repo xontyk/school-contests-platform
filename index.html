@@ -29,7 +29,7 @@
       <h1>Карта <span class="accent">достижений</span><br>лицея</h1>
       <div class="hero__grid">
       <div class="hero__copy">
-        <p class="hero__lead">Конкурсы, олимпиады и проекты по <strong>физике, математике и информатике</strong> в одном месте. Учитель подтверждает результат, портал начисляет баллы, строит рейтинг и выдаёт именной диплом.</p>
+        <p class="hero__lead">Конкурсы, олимпиады и проекты лицея по <strong>физике, математике и информатике</strong> теперь в одном месте. Учитель подтверждает результат, а портал сам считает баллы, обновляет рейтинг и готовит именной диплом.</p>
         <div class="hero__actions">
           <a href="login.html?tab=register" class="btn">Зарегистрироваться<svg class="icon"><use href="#icon-arrow-right"></use></svg></a>
           <a href="#contests" class="btn btn--outline">Смотреть конкурсы</a>
@@ -68,10 +68,10 @@
   <!-- ПОДСКАЗКА: полоса из 4 чисел (баллы, достижения, ученики, конкурсы) — считает база функцией get_public_stats(), заполняет скрипт внизу страницы. -->
   <section class="section--tight">
     <div class="container stat-row" id="landing-stats">
-      <div class="stat stat--total"><strong id="stat-points">—</strong><span>баллов в рейтинге</span></div>
-      <div class="stat"><strong id="stat-achievements">—</strong><span>подтверждённых достижений</span></div>
-      <div class="stat"><strong id="stat-students">—</strong><span>учеников</span></div>
-      <div class="stat stat--physics"><strong id="stat-contests">—</strong><span>открытых конкурсов</span></div>
+      <div class="stat stat--total"><strong id="stat-points">…</strong><span>баллов в рейтинге</span></div>
+      <div class="stat"><strong id="stat-achievements">…</strong><span>подтверждённых достижений</span></div>
+      <div class="stat"><strong id="stat-students">…</strong><span>учеников</span></div>
+      <div class="stat stat--physics"><strong id="stat-contests">…</strong><span>открытых конкурсов</span></div>
     </div>
   </section>
 
@@ -80,7 +80,7 @@
     <div class="container">
       <div class="section-head">
         <h2>Афиша <span class="accent">конкурсов</span></h2>
-        <p>Учитель публикует конкурс, ты подаёшь заявку в один клик, а после итогов получаешь баллы и диплом.</p>
+        <p>Учитель выкладывает конкурс, ты записываешься в один клик. После итогов приходят баллы и диплом.</p>
       </div>
       <div class="contest-grid" id="contests-grid"><div class="empty-state">Загружаем афишу…</div></div>
     </div>
@@ -91,13 +91,13 @@
     <div class="container">
       <div class="section-head">
         <h2>Как это <span class="accent">работает</span></h2>
-        <p>Ничего не попадает в рейтинг без проверки учителем, поэтому баллы нельзя накрутить.</p>
+        <p>Баллы попадают в рейтинг только после проверки учителем, так что накрутить их не получится.</p>
       </div>
       <div class="steps">
-        <div class="step"><div class="step__num">01</div><h3>Регистрация</h3><p>E-mail, код из письма, пароль и ФИО. Заявка уходит учителю.</p></div>
-        <div class="step"><div class="step__num">02</div><h3>Одобрение</h3><p>Учитель проверяет заявку и назначает роль: ученик или учитель.</p></div>
-        <div class="step"><div class="step__num">03</div><h3>Конкурс или достижение</h3><p>Подай заявку на конкурс или добавь своё достижение, на сайте или в боте.</p></div>
-        <div class="step"><div class="step__num">04</div><h3>Звезда на карте</h3><p>Учитель ставит результат: баллы в рейтинг, звезда на карту, диплом готов.</p></div>
+        <div class="step"><div class="step__num">01</div><h3>Регистрация</h3><p>Укажи почту, подтверди её по письму, придумай пароль и напиши ФИО. Заявка уйдёт учителю.</p></div>
+        <div class="step"><div class="step__num">02</div><h3>Одобрение</h3><p>Учитель смотрит заявку и решает, кто ты на портале: ученик или учитель.</p></div>
+        <div class="step"><div class="step__num">03</div><h3>Конкурс или достижение</h3><p>Запишись на конкурс или добавь своё достижение. Можно на сайте, можно в боте.</p></div>
+        <div class="step"><div class="step__num">04</div><h3>Звезда на карте</h3><p>Когда учитель подтвердит результат, баллы уйдут в рейтинг, на карте загорится звезда, а диплом можно будет скачать.</p></div>
       </div>
     </div>
   </section>
@@ -107,7 +107,7 @@
     <div class="container">
       <div class="section-head">
         <h2>Система <span class="accent">баллов</span></h2>
-        <p>Чем выше уровень и место, тем больше баллов. Волонтёрство считается по часам с потолком в 10 баллов, чтобы количество не обесценивало качество.</p>
+        <p>Чем выше уровень и место, тем больше баллов. За волонтёрство баллы идут по часам, но не больше 10 за одну заявку, чтобы часы не перевешивали победы на олимпиадах.</p>
       </div>
       <div class="table-wrap">
         <table class="points-table">
@@ -121,8 +121,8 @@
             <tr><td rowspan="3">Проект</td><td>Школьный</td><td>5</td><td>8</td><td>10</td><td>12</td></tr>
             <tr><td>Городской</td><td>10</td><td>14</td><td>16</td><td>20</td></tr>
             <tr><td>Региональный</td><td>15</td><td>20</td><td>25</td><td>30</td></tr>
-            <tr><td>Академическое</td><td>—</td><td colspan="4">5 баллов за подтверждённое достижение</td></tr>
-            <tr><td>Волонтёрство</td><td>—</td><td colspan="4">1 балл за 2 часа, не больше 10 за заявку</td></tr>
+            <tr><td>Академическое</td><td>любой</td><td colspan="4">5 баллов за подтверждённое достижение</td></tr>
+            <tr><td>Волонтёрство</td><td>любой</td><td colspan="4">1 балл за 2 часа, не больше 10 за заявку</td></tr>
           </tbody>
         </table>
       </div>
@@ -135,13 +135,13 @@
       <div class="tg-banner">
         <div>
           <h2>Рейтинг и баллы<br>прямо в Telegram</h2>
-          <p>Привяжи аккаунт в личном кабинете, и бот покажет твоё место в рейтинге, примет новое достижение и сразу напишет, когда учитель его проверит.</p>
+          <p>Привяжи аккаунт в личном кабинете. Бот покажет твоё место в рейтинге, примет новое достижение и напишет, как только учитель его проверит.</p>
           <a class="btn" href="https://t.me/achievementsportal_bot" target="_blank" rel="noopener"><svg class="icon"><use href="#icon-telegram"></use></svg>@achievementsportal_bot</a>
         </div>
         <div class="tg-banner__list">
-          <span class="tag">/rating — моё место</span>
-          <span class="tag">/add — новое достижение</span>
-          <span class="tag">/contests — афиша</span>
+          <span class="tag">/rating: моё место</span>
+          <span class="tag">/add: новое достижение</span>
+          <span class="tag">/contests: афиша</span>
           <span class="tag">уведомления о проверке</span>
           <span class="tag">начисления и отмены</span>
         </div>
@@ -153,7 +153,7 @@
   <section class="final-cta">
     <div class="container">
       <h2>Зажги <span class="accent">первую</span><br>звезду</h2>
-      <p>Регистрация занимает пару минут, остальное подтвердит учитель.</p>
+      <p>Регистрация займёт пару минут. Дальше дело за учителем.</p>
       <a href="login.html?tab=register" class="btn">Начать регистрацию<svg class="icon"><use href="#icon-arrow-right"></use></svg></a>
     </div>
   </section>
@@ -182,7 +182,7 @@
       const grid = document.getElementById('contests-grid');
       try {
         const contests = (await api.contests.list()).filter((c) => c.status !== 'finished');
-        if (!contests.length) { grid.innerHTML = '<div class="empty-state">Открытых конкурсов пока нет — загляни позже.</div>'; return; }
+        if (!contests.length) { grid.innerHTML = '<div class="empty-state">Открытых конкурсов пока нет. Загляни позже.</div>'; return; }
         grid.innerHTML = contests.map((c) => `
           <article class="contest-card">
             <div class="contest-card__meta">
@@ -192,7 +192,7 @@
             <h3>${escapeHtml(c.title)}</h3>
             <p>${escapeHtml(c.description)}</p>
             <div class="contest-card__footer">
-              <span class="contest-card__dates">${formatDate(c.startDate)} — ${formatDate(c.endDate)}</span>
+              <span class="contest-card__dates">${dateRange(c.startDate, c.endDate)}</span>
               <a class="btn btn--small" href="login.html">Участвовать</a>
             </div>
           </article>`).join('');

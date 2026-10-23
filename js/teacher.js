@@ -57,7 +57,7 @@ async function renderRegistrations() {
     <tr>
       <td>${escapeHtml(p.fullName)}</td>
       <td class="muted">${escapeHtml(p.email)}</td>
-      <td>${escapeHtml(p.className || '—')}</td>
+      <td>${escapeHtml(p.className || '')}</td>
       <td class="muted">${formatDate(p.createdAt)}</td>
       <td><div class="field" style="margin:0; min-width:130px;"><select data-role-for="${p.id}" aria-label="Роль"><option value="student">Ученик</option><option value="teacher">Учитель</option></select></div></td>
       <td><div class="flex-row" style="flex-wrap:nowrap;">
@@ -84,7 +84,7 @@ async function renderContests() {
         </div>
         <h3>${escapeHtml(c.title)}</h3>
         <p>${escapeHtml(c.description)}</p>
-        <span class="contest-card__dates">${formatDate(c.startDate)} — ${formatDate(c.endDate)} · ${escapeHtml(c.period || 'период не указан')}</span>
+        <span class="contest-card__dates">${dateRange(c.startDate, c.endDate)} · ${escapeHtml(c.period || 'период не указан')}</span>
         <div class="contest-card__footer">
           <button class="btn btn--small" data-participants="${c.id}">Участники · ${counts[c.id] || 0}</button>
           <div class="flex-row">
@@ -93,7 +93,7 @@ async function renderContests() {
           </div>
         </div>
       </article>`;
-  }).join('') : '<div class="empty-state">Конкурсов пока нет — опубликуйте первый.</div>';
+  }).join('') : '<div class="empty-state">Конкурсов пока нет. Опубликуйте первый.</div>';
 }
 
 function syncContestLevel(selected) {
@@ -122,8 +122,8 @@ async function openParticipants(contestId) {
   const level = (CURRENT_CONTEST.category === 'olympiad' ? OLYMPIAD_LEVELS : PROJECT_LEVELS)[CURRENT_CONTEST.level];
   document.getElementById('participants-summary').innerHTML =
     `${CATEGORY_LABELS[CURRENT_CONTEST.category]} · ${level ? level.label : ''} уровень. Баллы за результат: ` +
-    ['participant', '3', '2', '1'].map((r) => `${RESULT_LABELS[r].toLowerCase()} — <strong>${calcAchievementPoints({ category: CURRENT_CONTEST.category, level: CURRENT_CONTEST.level, place: r })}</strong>`).join(', ') +
-    '. Если у участника уже есть награда, при смене результата она отзывается — понадобится причина.';
+    ['participant', '3', '2', '1'].map((r) => `${RESULT_LABELS[r].toLowerCase()}: <strong>${calcAchievementPoints({ category: CURRENT_CONTEST.category, level: CURRENT_CONTEST.level, place: r })}</strong>`).join(', ') +
+    '. Если у участника уже есть награда, при смене результата она отзовётся, и нужно будет указать причину.';
   await renderParticipants();
   openModal('participants-modal');
 }
@@ -137,11 +137,11 @@ async function renderParticipants() {
     const ach = awards[p.achievementId];
     return `
       <tr>
-        <td>${escapeHtml(p.student ? p.student.fullName : '—')}</td>
-        <td>${escapeHtml(p.student ? p.student.className || '—' : '—')}</td>
+        <td>${escapeHtml(p.student ? p.student.fullName : 'удалён')}</td>
+        <td>${escapeHtml(p.student ? p.student.className || '' : '')}</td>
         <td>${resultBadge(p.result)}</td>
         <td><div class="field" style="margin:0; min-width:150px;"><select data-result-for="${p.id}" aria-label="Новый результат">${options(p.result)}</select></div></td>
-        <td class="num-strong">${ach && ach.status === 'approved' ? '+' + ach.points : '—'}</td>
+        <td class="num-strong">${ach && ach.status === 'approved' ? '+' + ach.points : ''}</td>
         <td><div class="flex-row" style="flex-wrap:nowrap;">
           <button class="btn btn--small" data-save-result="${p.id}" data-had-award="${p.achievementId ? 1 : 0}">Сохранить</button>
           ${p.achievementId ? `<button class="btn btn--outline btn--small" data-history="${p.achievementId}" aria-label="История">${icon('history')}</button>` : ''}
@@ -157,7 +157,7 @@ async function renderVerify() {
   setCount('count-verify', PENDING_ACH.length);
   document.getElementById('verify-tbody').innerHTML = PENDING_ACH.length ? PENDING_ACH.map((a) => `
     <tr>
-      <td>${escapeHtml(a.student ? a.student.fullName : '—')}<div class="muted" style="font-size:12.5px;">${escapeHtml(a.student ? a.student.className || '' : '')}</div></td>
+      <td>${escapeHtml(a.student ? a.student.fullName : 'удалён')}<div class="muted" style="font-size:12.5px;">${escapeHtml(a.student ? a.student.className || '' : '')}</div></td>
       <td>${escapeHtml(a.title)}${a.source === 'telegram' ? ' <span class="muted">· из бота</span>' : ''}</td>
       <td class="muted">${CATEGORY_LABELS[a.category]}</td>
       <td>${subjectTag(a.subject)}</td>
@@ -189,11 +189,11 @@ async function renderAwards() {
   const list = await api.achievements.listAll({ status });
   document.getElementById('awards-tbody').innerHTML = list.length ? list.map((a) => `
     <tr>
-      <td>${escapeHtml(a.student ? a.student.fullName : '—')}</td>
+      <td>${escapeHtml(a.student ? a.student.fullName : 'удалён')}</td>
       <td>${escapeHtml(a.title)}</td>
       <td class="muted">${SOURCE_LABELS[a.source] || a.source}</td>
       <td class="num-strong">${a.points}</td>
-      <td class="muted">${escapeHtml(a.teacherComment || '—')}</td>
+      <td class="muted">${escapeHtml(a.teacherComment || '')}</td>
       <td><div class="flex-row" style="flex-wrap:nowrap;">
         ${a.status === 'approved' ? `<button class="btn btn--danger btn--small" data-revoke="${a.id}">${icon('undo')}Отозвать</button>` : ''}
         <button class="btn btn--outline btn--small" data-history="${a.id}" aria-label="История">${icon('history')}</button>
@@ -207,7 +207,7 @@ async function showHistory(achievementId) {
   document.getElementById('history-body').innerHTML = log.length ? `
     <table class="data-table"><thead><tr><th>Когда</th><th>Действие</th><th>Баллы</th><th>Причина</th></tr></thead><tbody>
     ${log.map((l) => `<tr><td class="muted">${new Date(l.created_at).toLocaleString('ru-RU')}</td><td>${LOG_LABELS[l.action] || l.action}</td>
-      <td>${l.points_before ?? '—'} → ${l.points_after ?? '—'}</td><td class="muted">${escapeHtml(l.reason || '')}</td></tr>`).join('')}
+      <td>${l.points_before ?? 0} → ${l.points_after ?? 0}</td><td class="muted">${escapeHtml(l.reason || '')}</td></tr>`).join('')}
     </tbody></table>` : '<div class="empty-state">История пуста.</div>';
   openModal('history-modal');
 }
@@ -244,9 +244,9 @@ function drawUsers() {
       <td>${escapeHtml(u.fullName)}${self ? ' <span class="muted">(вы)</span>' : ''}${rejected ? `<br><span class="badge badge--rejected" title="${escapeHtml(u.rejectionReason || '')}">Отклонён</span>` : ''}</td>
       <td class="muted">${escapeHtml(u.email)}</td>
       <td><div class="field" style="margin:0; min-width:150px;"><select data-user-role="${u.id}" aria-label="Роль"${locked ? ' disabled' : ''}>${opt('student', 'Ученик')}${opt('teacher', 'Учитель')}${ME.isAdmin || u.isAdmin ? opt('admin', 'Администратор') : ''}</select></div></td>
-      <td><div class="field" style="margin:0; width:80px;"><input data-user-class="${u.id}" value="${escapeHtml(u.className || '')}" placeholder="—" aria-label="Класс"${locked ? ' disabled' : ''} /></div></td>
-      <td>${u.telegramLinked ? '<span class="badge badge--approved">Подключён</span>' : '<span class="muted">—</span>'}</td>
-      <td class="num-strong">${u.role === 'student' && !rejected ? TOTALS[u.id] || 0 : '—'}</td>
+      <td><div class="field" style="margin:0; width:80px;"><input data-user-class="${u.id}" value="${escapeHtml(u.className || '')}" placeholder="10А" aria-label="Класс"${locked ? ' disabled' : ''} /></div></td>
+      <td>${u.telegramLinked ? '<span class="badge badge--approved">Подключён</span>' : '<span class="muted">нет</span>'}</td>
+      <td class="num-strong">${u.role === 'student' && !rejected ? TOTALS[u.id] || 0 : ''}</td>
       <td><div class="flex-row" style="flex-wrap:nowrap;">
         ${locked ? '' : `<button class="btn btn--small${rejected ? '' : ' btn--outline'}" data-save-user="${u.id}">${icon('check')}${rejected ? 'Вернуть' : 'Сохранить'}</button>`}
         ${u.role === 'student' && !rejected ? `<button class="btn btn--outline btn--small" data-add-for="${u.id}" data-name="${escapeHtml(u.fullName)}">${icon('plus')}Начислить</button>` : ''}
@@ -287,7 +287,7 @@ async function renderRating() {
   document.getElementById('t-rating-tbody').innerHTML = rows.length ? rows.map((r) => `
     <tr>
       <td><span class="rank ${r.rank <= 3 ? 'rank--' + r.rank : ''}">${r.rank}</span></td>
-      <td>${escapeHtml(r.name)}</td><td>${escapeHtml(r.className || '—')}</td>
+      <td>${escapeHtml(r.name)}</td><td>${escapeHtml(r.className || '')}</td>
       <td>${r.physics}</td><td>${r.math}</td><td>${r.cs}</td><td class="num-strong">${r.total}</td>
     </tr>`).join('') : '<tr><td colspan="7" class="empty-state">Нет данных.</td></tr>';
 }
@@ -326,7 +326,7 @@ function wireActions() {
       const result = document.querySelector(`[data-result-for="${id}"]`).value;
       let reason = null;
       if (el.dataset.hadAward === '1') {
-        reason = await askReason('Изменить результат', 'Ранее начисленная награда за этот конкурс будет отозвана. Укажите причину — она сохранится в истории.', 'Изменить и отозвать');
+        reason = await askReason('Изменить результат', 'Награда, которую ученик уже получил за этот конкурс, будет отозвана. Напишите почему, это сохранится в истории.', 'Изменить и отозвать');
         if (!reason) return;
       }
       el.disabled = true;

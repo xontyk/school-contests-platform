@@ -35,8 +35,8 @@ function diplomaReason(a) {
   const place = a.place && a.place !== 'participant' ? `${a.place} место` : 'участие';
   // «олимпиада «Муниципальная олимпиада…»» звучит коряво: тип пишем, только если его нет в названии
   const kind = (word, label) => (a.title.toLowerCase().includes(word) ? '' : label + ' ');
-  if (a.category === 'olympiad') return `${place} — ${kind('олимпиад', 'олимпиада')}«${a.title}»`;
-  if (a.category === 'project') return `${place} — ${kind('проект', 'конкурс проектов')}«${a.title}»`;
+  if (a.category === 'olympiad') return `${place}: ${kind('олимпиад', 'олимпиада')}«${a.title}»`;
+  if (a.category === 'project') return `${place}: ${kind('проект', 'конкурс проектов')}«${a.title}»`;
   if (a.category === 'volunteer') return `волонтёрство: «${a.title}»${a.hours ? `, ${a.hours} ч` : ''}`;
   return `«${a.title}»`;
 }

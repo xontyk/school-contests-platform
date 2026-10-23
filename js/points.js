@@ -56,7 +56,7 @@ function periodOptions() {
   const current = periodOf().split(',')[0];
   const [a] = current.split('/').map(Number);
   const years = [current, `${a - 1}/${a}`];
-  return years.flatMap((y) => [{ value: y, label: `${y} — весь год` }, ...QUARTERS.map((q) => ({ value: `${y}, ${q} четверть`, label: `${y}, ${q} четверть` }))]);
+  return years.flatMap((y) => [{ value: y, label: `${y}, весь год` }, ...QUARTERS.map((q) => ({ value: `${y}, ${q} четверть`, label: `${y}, ${q} четверть` }))]);
 }
 
 /** Заполняет <select> уровней для олимпиады или проекта. */

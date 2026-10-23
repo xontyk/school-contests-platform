@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Кабинет учителя — Портал достижений</title>
+  <title>Кабинет учителя · Портал достижений</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
@@ -38,7 +38,7 @@
     <section class="tab-panel active" id="panel-registrations">
       <div class="card">
         <h2 class="card-title">Заявки на регистрацию</h2>
-        <p class="card-sub">Новый пользователь получает доступ только после вашего решения. Вы же назначаете роль.</p>
+        <p class="card-sub">Войти на портал человек сможет только после вашего решения. Роль тоже выбираете вы.</p>
         <div class="table-wrap">
           <table class="data-table">
             <thead><tr><th>ФИО</th><th>E-mail</th><th>Класс</th><th>Подана</th><th>Роль</th><th></th></tr></thead>
@@ -52,7 +52,7 @@
     <!-- конкурсы и их участники (renderContests, openParticipants) -->
     <section class="tab-panel" id="panel-contests">
       <div class="flex-between" style="margin-bottom:16px;">
-        <p class="muted" style="margin:0;">Публикуйте конкурсы и выставляйте результаты — призовое место начисляет баллы, неверный результат можно отменить с причиной.</p>
+        <p class="muted" style="margin:0;">Публикуйте конкурсы и выставляйте результаты. За призовое место баллы начисляются сами, а ошибочный результат можно поменять, указав причину.</p>
         <button class="btn" id="new-contest-btn"><svg class="icon"><use href="#icon-plus"></use></svg>Новый конкурс</button>
       </div>
       <div class="contest-grid" id="teacher-contest-grid"></div>
@@ -102,7 +102,7 @@
           <h2 class="card-title">Пользователи</h2>
           <button class="btn" id="create-user-btn" type="button" hidden><svg class="icon"><use href="#icon-plus"></use></svg>Создать пользователя</button>
         </div>
-        <p class="card-sub">Все зарегистрированные. Меняйте роль и класс, возвращайте отклонённых. Ученику можно начислить достижение напрямую — оно сразу подтверждено и попадёт в историю.</p>
+        <p class="card-sub">Все зарегистрированные. Меняйте роль и класс, возвращайте отклонённых. Ученику можно начислить достижение напрямую: оно сразу засчитается и появится в истории.</p>
         <div class="flex-row" style="margin-bottom:6px;">
           <div class="field" style="margin:0; min-width:170px;"><label for="u-filter">Показать</label>
             <select id="u-filter">
@@ -226,7 +226,7 @@
           <div class="field"><label for="a-date">Дата</label><input id="a-date" type="date" required /></div>
           <div class="field"><label for="a-period">Период</label><select id="a-period"></select></div>
         </div>
-        <div class="hint"><strong>Баллы: <span id="a-points">0</span></strong> — сразу «Подтверждено», запись появится в истории начислений.</div>
+        <div class="hint"><strong>Баллы: <span id="a-points">0</span></strong>. Достижение сразу получит статус «Подтверждено» и появится в истории начислений.</div>
         <div class="modal__actions">
           <button type="button" class="btn btn--outline" data-close>Отмена</button>
           <button type="submit" class="btn">Начислить</button>
@@ -239,7 +239,7 @@
   <div class="modal-overlay hidden" id="create-user-modal">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="create-user-title">
       <h2 id="create-user-title">Создать пользователя</h2>
-      <p class="modal__summary">Аккаунт появится сразу, без письма. Передайте человеку логин и пароль — сменить пароль можно через «Забыли пароль?». «Одобрен» — вход открыт сразу, «На рассмотрении» — аккаунт попадёт во вкладку «Заявки».</p>
+      <p class="modal__summary">Аккаунт появится сразу, без письма. Передайте человеку логин и пароль, а сменить пароль можно самостоятельно через «Забыли пароль?». Со статусом «Одобрен» войти можно сразу, а «На рассмотрении» отправит аккаунт во вкладку «Заявки».</p>
       <form id="create-user-form" autocomplete="off">
         <div class="field-row">
           <div class="field"><label for="cu-email">E-mail (логин)</label><input id="cu-email" type="email" required autocomplete="off" /></div>

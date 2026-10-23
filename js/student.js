@@ -42,7 +42,7 @@ function renderMap() {
       <td>${escapeHtml(a.title)}</td>
       <td class="muted">${CATEGORY_LABELS[a.category]}</td>
       <td>${subjectTag(a.subject)}</td>
-      <td class="muted">${escapeHtml(a.period || '—')}</td>
+      <td class="muted">${escapeHtml(a.period || 'не указан')}</td>
       <td class="num-strong">+${a.points}</td>
       <td class="no-print"><button class="btn btn--outline btn--small" data-diploma="${a.id}">${icon('download')}Диплом</button></td>
     </tr>`).join('') : '<tr><td colspan="6" class="empty-state">Пока нет подтверждённых достижений.</td></tr>';
@@ -77,7 +77,7 @@ async function renderContests() {
         <h3>${escapeHtml(c.title)}</h3>
         <p>${escapeHtml(c.description)}</p>
         <div class="contest-card__footer">
-          <span class="contest-card__dates">${formatDate(c.startDate)} — ${formatDate(c.endDate)}</span>
+          <span class="contest-card__dates">${dateRange(c.startDate, c.endDate)}</span>
           ${action}
         </div>
       </article>`;
@@ -88,9 +88,9 @@ async function renderContests() {
     const ach = MY_ACH.find((a) => a.id === p.achievementId);
     return `
       <tr>
-        <td>${escapeHtml(p.contest ? p.contest.title : '—')}</td>
+        <td>${escapeHtml(p.contest ? p.contest.title : 'конкурс удалён')}</td>
         <td>${resultBadge(p.result)}</td>
-        <td class="num-strong">${ach ? '+' + ach.points : '—'}</td>
+        <td class="num-strong">${ach ? '+' + ach.points : ''}</td>
         <td class="muted">${escapeHtml(p.statusReason || '')}</td>
         <td>${ach && ach.status === 'approved' ? `<button class="btn btn--outline btn--small" data-diploma="${ach.id}">${icon('download')}Диплом</button>` : ''}</td>
       </tr>`;
@@ -108,9 +108,9 @@ function renderAchievements() {
       <td>${subjectTag(a.subject)}</td>
       <td class="num-strong">${a.status === 'approved' ? '+' + a.points : a.points}</td>
       <td>${statusBadge(a.status)}</td>
-      <td class="muted">${escapeHtml(a.teacherComment || '—')}</td>
+      <td class="muted">${escapeHtml(a.teacherComment || '')}</td>
       <td>${a.status === 'approved' ? `<button class="btn btn--outline btn--small" data-diploma="${a.id}">${icon('download')}Диплом</button>` : ''}</td>
-    </tr>`).join('') : '<tr><td colspan="7" class="empty-state">Пока нет достижений — добавьте первое!</td></tr>';
+    </tr>`).join('') : '<tr><td colspan="7" class="empty-state">Достижений пока нет. Добавьте первое!</td></tr>';
 }
 
 /** Показывает нужные поля формы: уровень и место — для олимпиад и проектов, часы — для волонтёрства. */
@@ -205,7 +205,7 @@ async function renderRating() {
     <tr class="${r.userId === ME.id ? 'is-me' : ''}">
       <td><span class="rank ${r.rank <= 3 ? 'rank--' + r.rank : ''}">${r.rank}</span></td>
       <td>${escapeHtml(r.name)}${r.userId === ME.id ? ' <strong>(вы)</strong>' : ''}</td>
-      <td>${escapeHtml(r.className || '—')}</td>
+      <td>${escapeHtml(r.className || '')}</td>
       <td>${r.physics}</td><td>${r.math}</td><td>${r.cs}</td>
       <td class="num-strong">${r.total}</td>
     </tr>`).join('') : '<tr><td colspan="7" class="empty-state">Нет данных для выбранных фильтров.</td></tr>';
@@ -220,7 +220,7 @@ function initToolbar() {
     try {
       const url = await api.telegram.linkUrl();
       window.open(url, '_blank', 'noopener');
-      showToast('Нажмите «Start» в боте — аккаунт привяжется автоматически');
+      showToast('Нажмите «Start» в боте, и аккаунт привяжется сам');
     } catch (ex) { showToast(ex.message, true); }
   });
   document.getElementById('print-btn').addEventListener('click', () => {

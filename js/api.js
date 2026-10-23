@@ -28,8 +28,8 @@ const api = (() => {
     'Email rate limit exceeded': 'Почтовый лимит исчерпан: сайт может отправить лишь несколько писем в час. Попробуйте через час или попросите учителя.',
     'email rate limit exceeded': 'Почтовый лимит исчерпан: сайт может отправить лишь несколько писем в час. Попробуйте через час или попросите учителя.',
     'Password should be at least 6 characters.': 'Пароль должен быть не короче 6 символов.',
-    'New password should be different from the old password.': 'Новый пароль совпадает со старым — придумайте другой.',
-    'Auth session missing!': 'Ссылка из письма устарела — запросите новую.',
+    'New password should be different from the old password.': 'Новый пароль совпадает со старым. Придумайте другой.',
+    'Auth session missing!': 'Ссылка из письма устарела, запросите новую.',
   };
 
   function fail(error) {
@@ -157,7 +157,7 @@ const api = (() => {
       if (!password || password.length < 6) throw new Error('Пароль должен быть не короче 6 символов.');
       if (!lastName || !firstName) throw new Error('Укажите фамилию и имя.');
       const id = await myId();
-      if (!id) throw new Error('Сессия истекла — подтвердите e-mail заново.');
+      if (!id) throw new Error('Сессия истекла. Подтвердите e-mail ещё раз.');
       unwrap(await sb.auth.updateUser({ password }));
       unwrap(await sb.from('profiles').update({
         last_name: lastName, first_name: firstName, middle_name: middleName || '',
@@ -205,7 +205,7 @@ const api = (() => {
     async setRole(userId, role, className) {
       if (!['student', 'teacher', 'admin'].includes(role)) throw new Error('Неизвестная роль');
       const { data: { user } } = await sb.auth.getUser();
-      if (user && user.id === userId) throw new Error('Свою роль поменять нельзя — попросите другого учителя.');
+      if (user && user.id === userId) throw new Error('Свою роль поменять нельзя. Попросите об этом другого учителя.');
       const rows = unwrap(await sb.from('profiles').update({
         role: role === 'student' ? 'student' : 'teacher', is_admin: role === 'admin',
         status: 'approved', rejection_reason: null,

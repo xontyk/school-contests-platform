@@ -69,8 +69,14 @@ function pointsWord(n) {
   return `${n} баллов`;
 }
 
+/** «с 15.10.2026 по 20.11.2026», или одна дата, если вторая не указана. */
+function dateRange(start, end) {
+  if (start && end) return `с ${formatDate(start)} по ${formatDate(end)}`;
+  return formatDate(start || end);
+}
+
 function formatDate(iso) {
-  if (!iso) return '—';
+  if (!iso) return '';
   const [y, m, d] = String(iso).slice(0, 10).split('-');
   return `${d}.${m}.${y}`;
 }
@@ -140,7 +146,7 @@ function askReason(title, hint, confirmLabel = 'Подтвердить') {
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay || e.target.dataset.act === 'cancel') close(null);
       if (e.target.dataset.act === 'ok') {
-        if (!input.value.trim()) { overlay.querySelector('#reason-error').textContent = 'Причина обязательна — она попадёт в историю.'; return; }
+        if (!input.value.trim()) { overlay.querySelector('#reason-error').textContent = 'Без причины нельзя: она сохранится в истории.'; return; }
         close(input.value.trim());
       }
     });

@@ -85,7 +85,7 @@ async function continueAfterConfirm(profile) {
     await api.auth.logout();
     if (profile.status === 'approved') return showDone('Вы уже зарегистрированы', 'Войдите по e-mail и паролю на вкладке «Вход».');
     if (profile.status === 'rejected') return showDone('Заявка отклонена', `Причина: ${profile.rejectionReason || 'не указана'}. Обратитесь к учителю.`);
-    return showDone('Заявка уже на рассмотрении', 'Учитель ещё не принял решение. Как только одобрит — войдите по e-mail и паролю.');
+    return showDone('Заявка уже на рассмотрении', 'Учитель ещё не принял решение. Когда одобрит, входите по e-mail и паролю.');
   }
   REG_EMAIL = profile ? profile.email : REG_EMAIL;
   setTabs('register');
@@ -110,7 +110,7 @@ function showResetRequest(email, error) {
   if (URL_QUERY.toString() || location.hash) history.replaceState(null, '', 'login.html');
 
   if (isReset) {
-    if (!profile) return showResetRequest('', 'Ссылка устарела или уже использована — запросите новое письмо.');
+    if (!profile) return showResetRequest('', 'Эта ссылка устарела или уже использована. Запросите новое письмо.');
     // по ссылке пришёл человек, не закончивший регистрацию, — у него ещё нет пароля и ФИО
     if (!profile.registrationCompleted) return continueAfterConfirm(profile);
     document.getElementById('reset-account').textContent = profile.email;
@@ -129,7 +129,7 @@ function showResetRequest(email, error) {
   }
   if (linkError && URL_QUERY.get('confirmed') === '1') {
     showTab('register');
-    return showError(document.getElementById('reg-email-error'), 'Ссылка из письма устарела или уже использована — запросите новую.');
+    return showError(document.getElementById('reg-email-error'), 'Ссылка из письма устарела или уже использована. Запросите новую.');
   }
   showTab(URL_QUERY.get('tab') === 'register' ? 'register' : 'login');
 })();
@@ -238,7 +238,7 @@ document.getElementById('register-details-form').addEventListener('submit', (e) 
         middleName: document.getElementById('reg-middlename').value.trim(),
         className: document.getElementById('reg-class').value.trim().toUpperCase(),
       });
-      showDone('Заявка отправлена', 'Учитель рассмотрит её и назначит роль — ученик или учитель. После одобрения входите по e-mail и паролю.');
+      showDone('Заявка отправлена', 'Учитель посмотрит её и решит, ученик вы или учитель. После одобрения входите по e-mail и паролю.');
     } catch (ex) { showError(err, ex.message); }
   });
 });
