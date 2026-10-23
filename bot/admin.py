@@ -9,6 +9,10 @@ admin.py — служебные команды для владельца пор�
         Задать новый пароль любому пользователю без письма (если почта не доходит).
         Пароль спрашивается в терминале.
 
+    python admin.py make-admin EMAIL
+        Сделать учителя главным администратором: на сайте у него появится
+        «Создать пользователя» и роль «Администратор» в списке.
+
     python admin.py clear-demo
         Удалить демо-аккаунты *@lyceum.ru из seed.py вместе с их достижениями,
         заявками и конкурсами, которые создал демо-учитель.
@@ -51,6 +55,19 @@ async def set_password(email: str) -> None:
         password = ask_password()
         (await db.http.put(f"/auth/v1/admin/users/{uid}", json={"password": password, "email_confirm": True})).raise_for_status()
         print(f"Готово: пароль для {email} изменён.")
+    finally:
+        await db.close()
+
+
+async def make_admin(email: str) -> None:
+    email = email.strip().lower()
+    db = Db()
+    try:
+        rows = await db.update("profiles", {"email": f"eq.{email}"},
+                               {"role": "teacher", "status": "approved", "is_admin": True, "class_name": None})
+        if not rows:
+            raise SystemExit(f"Пользователь {email} не найден.")
+        print(f"Готово: {email} — главный администратор.")
     finally:
         await db.close()
 
@@ -103,6 +120,8 @@ def main() -> None:
         asyncio.run(make_teacher(args[1], args[2] if len(args) == 3 else ""))
     elif len(args) == 2 and args[0] == "password":
         asyncio.run(set_password(args[1]))
+    elif len(args) == 2 and args[0] == "make-admin":
+        asyncio.run(make_admin(args[1]))
     elif args == ["clear-demo"]:
         asyncio.run(clear_demo())
     else:

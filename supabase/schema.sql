@@ -35,6 +35,9 @@ create table if not exists public.profiles (
   created_at              timestamptz not null default now()
 );
 
+-- Главный администратор (учитель с правом создавать аккаунты и назначать админов).
+alter table public.profiles add column if not exists is_admin boolean not null default false;
+
 create table if not exists public.contests (
   id           bigint generated always as identity primary key,
   title        text not null,
@@ -146,6 +149,12 @@ returns boolean language sql stable security definer set search_path = public as
   select coalesce(public.my_role() = 'teacher', false);
 $$;
 
+create or replace function public.is_admin()
+returns boolean language sql stable security definer set search_path = public as $$
+  select coalesce((select is_admin from public.profiles
+                    where id = auth.uid() and status = 'approved' and role = 'teacher'), false);
+$$;
+
 create or replace function public.is_privileged()
 returns boolean language sql stable as $$
   select current_user in ('service_role', 'postgres', 'supabase_admin');
@@ -171,11 +180,22 @@ create trigger on_auth_user_created
   for each row execute function public.handle_new_user();
 
 -- Пользователь сам может менять только ФИО и класс; роль, статус и
--- привязку Telegram меняют учитель, RPC-функции или бот.
+-- привязку Telegram меняют учитель, RPC-функции или бот. Флаг администратора
+-- и профиль самого администратора меняет только администратор.
 create or replace function public.protect_profile()
 returns trigger language plpgsql as $$
 begin
-  if public.is_privileged() or public.is_teacher() then
+  if public.is_privileged() then
+    return new;
+  end if;
+  if not public.is_admin() then
+    new.is_admin := old.is_admin;
+    if old.is_admin then
+      new.role := old.role;
+      new.status := old.status;
+    end if;
+  end if;
+  if public.is_teacher() then
     return new;
   end if;
   new.id := old.id;
@@ -493,6 +513,73 @@ begin
 end $$;
 
 -- ---------------------------------------------------------------------
+-- Администратор: создание аккаунта без письма
+-- ---------------------------------------------------------------------
+
+-- Создаёт пользователя Supabase Auth с паролем (bcrypt) и подтверждённым
+-- e-mail, сразу с ФИО, ролью и статусом. pending — человек попадёт в «Заявки»,
+-- approved — сразу может войти. Служебный ключ на сайте для этого не нужен.
+create or replace function public.admin_create_user(
+  p_email text, p_password text,
+  p_last_name text, p_first_name text, p_middle_name text, p_class text,
+  p_role text, p_status text, p_admin boolean default false)
+returns uuid language plpgsql security definer set search_path = public as $$
+declare
+  v_id    uuid := gen_random_uuid();
+  v_email text := lower(trim(coalesce(p_email, '')));
+begin
+  if not public.is_admin() then
+    raise exception 'Создавать пользователей может только администратор';
+  end if;
+  if v_email !~ '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$' then
+    raise exception 'Некорректный e-mail';
+  end if;
+  if length(coalesce(p_password, '')) < 6 then
+    raise exception 'Пароль должен быть не короче 6 символов';
+  end if;
+  if trim(coalesce(p_last_name, '')) = '' or trim(coalesce(p_first_name, '')) = '' then
+    raise exception 'Укажите фамилию и имя';
+  end if;
+  if p_role not in ('student', 'teacher') then
+    raise exception 'Неизвестная роль: %', p_role;
+  end if;
+  if p_status not in ('approved', 'pending') then
+    raise exception 'Неизвестный статус: %', p_status;
+  end if;
+  if p_admin and p_role <> 'teacher' then
+    raise exception 'Администратором может быть только учитель';
+  end if;
+  if exists (select 1 from auth.users where lower(email) = v_email) then
+    raise exception 'Пользователь с таким e-mail уже есть';
+  end if;
+
+  -- пустые строки вместо NULL: Supabase Auth не умеет читать NULL в этих колонках
+  insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+                          raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+                          confirmation_token, recovery_token, email_change_token_new, email_change,
+                          email_change_token_current, reauthentication_token, phone_change, phone_change_token)
+  values ('00000000-0000-0000-0000-000000000000', v_id, 'authenticated', 'authenticated', v_email,
+          extensions.crypt(p_password, extensions.gen_salt('bf')), now(),
+          '{"provider": "email", "providers": ["email"]}', '{}', now(), now(),
+          '', '', '', '', '', '', '', '');
+  insert into auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
+  values (gen_random_uuid(), v_id, v_id::text,
+          jsonb_build_object('sub', v_id::text, 'email', v_email, 'email_verified', true),
+          'email', now(), now(), now());
+
+  -- профиль уже создал триггер on_auth_user_created
+  update public.profiles
+     set last_name = trim(p_last_name), first_name = trim(p_first_name),
+         middle_name = trim(coalesce(p_middle_name, '')),
+         class_name = case when p_role = 'student' then nullif(upper(trim(coalesce(p_class, ''))), '') end,
+         role = p_role, status = p_status, is_admin = p_admin, registration_completed = true,
+         decided_by = case when p_status = 'approved' then auth.uid() end,
+         decided_at = case when p_status = 'approved' then now() end
+   where id = v_id;
+  return v_id;
+end $$;
+
+-- ---------------------------------------------------------------------
 -- Row Level Security
 -- ---------------------------------------------------------------------
 
@@ -566,6 +653,7 @@ revoke execute on function public.teacher_add_achievement(uuid, text, text, text
 revoke execute on function public.set_participation_result(bigint, text, text) from public, anon;
 revoke execute on function public.get_rating(text, text, text)                from public, anon;
 revoke execute on function public.create_telegram_link_code()                 from public, anon;
+revoke execute on function public.admin_create_user(text, text, text, text, text, text, text, text, boolean) from public, anon;
 
 grant execute on function public.approve_registration(uuid, text, text)      to authenticated;
 grant execute on function public.reject_registration(uuid, text)             to authenticated;
@@ -575,6 +663,7 @@ grant execute on function public.teacher_add_achievement(uuid, text, text, text,
 grant execute on function public.set_participation_result(bigint, text, text) to authenticated;
 grant execute on function public.get_rating(text, text, text)                to authenticated;
 grant execute on function public.create_telegram_link_code()                 to authenticated;
+grant execute on function public.admin_create_user(text, text, text, text, text, text, text, text, boolean) to authenticated;
 grant execute on function public.get_public_stats()                          to anon, authenticated;
 grant execute on function public.calc_points(text, text, text, int)          to anon, authenticated;
 

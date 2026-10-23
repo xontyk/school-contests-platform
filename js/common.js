@@ -5,7 +5,7 @@
 const ACH_STATUS_LABELS = { pending: 'На проверке', approved: 'Подтверждено', rejected: 'Отклонено', revoked: 'Отозвано' };
 const CONTEST_STATUS_LABELS = { upcoming: 'Скоро', active: 'Идёт приём', finished: 'Завершён' };
 const RESULT_LABELS = { registered: 'Заявка подана', participant: 'Участник', '3': '3 место', '2': '2 место', '1': '1 место', absent: 'Не явился' };
-const ROLE_LABELS = { student: 'Ученик', teacher: 'Учитель' };
+const ROLE_LABELS = { student: 'Ученик', teacher: 'Учитель', admin: 'Администратор' };
 
 // Один набор line-иконок (24×24, единая обводка) + заливная «искра» из референса.
 const ICON_SPRITE = `

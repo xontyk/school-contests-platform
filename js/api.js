@@ -48,6 +48,7 @@ const api = (() => {
       registrationCompleted: r.registration_completed,
       rejectionReason: r.rejection_reason, createdAt: r.created_at,
       telegramLinked: r.telegram_chat_id != null,
+      isAdmin: r.is_admin === true,
     };
   }
   function toAchievement(r) {
@@ -188,16 +189,30 @@ const api = (() => {
       return rows.map(toProfile);
     },
     /** Сменить роль и класс (или вернуть отклонённого). Пускают RLS и триггер protect_profile только учителя. */
+    /**
+     * Сменить роль и класс (или вернуть отклонённого). role: student | teacher | admin
+     * (admin = учитель с флагом is_admin). Пускают RLS и триггер protect_profile:
+     * менять чужие профили может учитель, а флаг и профиль администратора — только администратор.
+     */
     async setRole(userId, role, className) {
-      if (!['student', 'teacher'].includes(role)) throw new Error('Неизвестная роль');
+      if (!['student', 'teacher', 'admin'].includes(role)) throw new Error('Неизвестная роль');
       const { data: { user } } = await sb.auth.getUser();
       if (user && user.id === userId) throw new Error('Свою роль поменять нельзя — попросите другого учителя.');
       const rows = unwrap(await sb.from('profiles').update({
-        role, status: 'approved', rejection_reason: null,
+        role: role === 'student' ? 'student' : 'teacher', is_admin: role === 'admin',
+        status: 'approved', rejection_reason: null,
         class_name: role === 'student' ? (className || '').trim().toUpperCase() || null : null,
         decided_by: user ? user.id : null, decided_at: new Date().toISOString(),
       }).eq('id', userId).select('id'));
       if (!rows.length) throw new Error('Не удалось изменить: нет прав или пользователь не найден');
+    },
+    /** Только администратор: аккаунт с паролем без письма (функция admin_create_user в базе). */
+    async create({ email, password, lastName, firstName, middleName, className, role, status }) {
+      return unwrap(await sb.rpc('admin_create_user', {
+        p_email: email, p_password: password,
+        p_last_name: lastName, p_first_name: firstName, p_middle_name: middleName || '', p_class: className || '',
+        p_role: role === 'student' ? 'student' : 'teacher', p_status: status, p_admin: role === 'admin',
+      }));
     },
   };
 

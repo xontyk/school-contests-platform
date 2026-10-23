@@ -92,7 +92,10 @@
     <!-- ===================== Ученики ===================== -->
     <section class="tab-panel" id="panel-students">
       <div class="card">
-        <h2 class="card-title">Пользователи</h2>
+        <div class="flex-between">
+          <h2 class="card-title">Пользователи</h2>
+          <button class="btn" id="create-user-btn" type="button" hidden><svg class="icon"><use href="#icon-plus"></use></svg>Создать пользователя</button>
+        </div>
         <p class="card-sub">Все зарегистрированные. Меняйте роль и класс, возвращайте отклонённых. Ученику можно начислить достижение напрямую — оно сразу подтверждено и попадёт в историю.</p>
         <div class="flex-row" style="margin-bottom:6px;">
           <div class="field" style="margin:0; min-width:170px;"><label for="u-filter">Показать</label>
@@ -220,6 +223,44 @@
         <div class="modal__actions">
           <button type="button" class="btn btn--outline" data-close>Отмена</button>
           <button type="submit" class="btn">Начислить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================== модалка: создать пользователя (админ) ===================== -->
+  <div class="modal-overlay hidden" id="create-user-modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="create-user-title">
+      <h2 id="create-user-title">Создать пользователя</h2>
+      <p class="modal__summary">Аккаунт появится сразу, без письма. Передайте человеку логин и пароль — сменить пароль можно через «Забыли пароль?». «Одобрен» — вход открыт сразу, «На рассмотрении» — аккаунт попадёт во вкладку «Заявки».</p>
+      <form id="create-user-form" autocomplete="off">
+        <div class="field-row">
+          <div class="field"><label for="cu-email">E-mail (логин)</label><input id="cu-email" type="email" required autocomplete="off" /></div>
+          <div class="field"><label for="cu-password">Пароль</label>
+            <div class="flex-row" style="flex-wrap:nowrap; gap:8px;">
+              <input id="cu-password" type="text" minlength="6" required autocomplete="new-password" spellcheck="false" />
+              <button class="btn btn--outline btn--small" type="button" id="cu-generate" title="Сгенерировать пароль">Придумать</button>
+            </div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label for="cu-lastname">Фамилия</label><input id="cu-lastname" required /></div>
+          <div class="field"><label for="cu-firstname">Имя</label><input id="cu-firstname" required /></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label for="cu-middlename">Отчество</label><input id="cu-middlename" /></div>
+          <div class="field" id="cu-class-field"><label for="cu-class">Класс</label><input id="cu-class" placeholder="например, 10А" /></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label for="cu-role">Роль</label>
+            <select id="cu-role"><option value="student">Ученик</option><option value="teacher">Учитель</option><option value="admin">Администратор</option></select></div>
+          <div class="field"><label for="cu-status">Статус</label>
+            <select id="cu-status"><option value="approved">Одобрен</option><option value="pending">На рассмотрении</option></select></div>
+        </div>
+        <p class="error-text" id="cu-error" role="alert"></p>
+        <div class="modal__actions">
+          <button type="button" class="btn btn--outline" data-close>Отмена</button>
+          <button type="submit" class="btn">Создать</button>
         </div>
       </form>
     </div>

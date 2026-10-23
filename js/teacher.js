@@ -212,17 +212,20 @@ function drawUsers() {
   document.getElementById('students-tbody').innerHTML = list.length ? list.map((u) => {
     const self = ME && u.id === ME.id;
     const rejected = u.status === 'rejected';
-    const opt = (v, label) => `<option value="${v}"${u.role === v ? ' selected' : ''}>${label}</option>`;
+    // профиль администратора меняет только администратор (то же правило в триггере protect_profile)
+    const locked = self || (u.isAdmin && !ME.isAdmin);
+    const role = u.isAdmin ? 'admin' : u.role;
+    const opt = (v, label) => `<option value="${v}"${role === v ? ' selected' : ''}>${label}</option>`;
     return `
     <tr>
       <td>${escapeHtml(u.fullName)}${self ? ' <span class="muted">(вы)</span>' : ''}${rejected ? `<br><span class="badge badge--rejected" title="${escapeHtml(u.rejectionReason || '')}">Отклонён</span>` : ''}</td>
       <td class="muted">${escapeHtml(u.email)}</td>
-      <td><div class="field" style="margin:0; min-width:120px;"><select data-user-role="${u.id}" aria-label="Роль"${self ? ' disabled' : ''}>${opt('student', 'Ученик')}${opt('teacher', 'Учитель')}</select></div></td>
-      <td><div class="field" style="margin:0; width:80px;"><input data-user-class="${u.id}" value="${escapeHtml(u.className || '')}" placeholder="—" aria-label="Класс"${self ? ' disabled' : ''} /></div></td>
+      <td><div class="field" style="margin:0; min-width:150px;"><select data-user-role="${u.id}" aria-label="Роль"${locked ? ' disabled' : ''}>${opt('student', 'Ученик')}${opt('teacher', 'Учитель')}${ME.isAdmin || u.isAdmin ? opt('admin', 'Администратор') : ''}</select></div></td>
+      <td><div class="field" style="margin:0; width:80px;"><input data-user-class="${u.id}" value="${escapeHtml(u.className || '')}" placeholder="—" aria-label="Класс"${locked ? ' disabled' : ''} /></div></td>
       <td>${u.telegramLinked ? '<span class="badge badge--approved">Подключён</span>' : '<span class="muted">—</span>'}</td>
       <td class="num-strong">${u.role === 'student' && !rejected ? TOTALS[u.id] || 0 : '—'}</td>
       <td><div class="flex-row" style="flex-wrap:nowrap;">
-        ${self ? '' : `<button class="btn btn--small${rejected ? '' : ' btn--outline'}" data-save-user="${u.id}">${icon('check')}${rejected ? 'Вернуть' : 'Сохранить'}</button>`}
+        ${locked ? '' : `<button class="btn btn--small${rejected ? '' : ' btn--outline'}" data-save-user="${u.id}">${icon('check')}${rejected ? 'Вернуть' : 'Сохранить'}</button>`}
         ${u.role === 'student' && !rejected ? `<button class="btn btn--outline btn--small" data-add-for="${u.id}" data-name="${escapeHtml(u.fullName)}">${icon('plus')}Начислить</button>` : ''}
       </div></td>
     </tr>`;
@@ -315,6 +318,9 @@ function wireActions() {
       const user = USERS.find((u) => u.id === id);
       const role = document.querySelector(`[data-user-role="${id}"]`).value;
       const className = document.querySelector(`[data-user-class="${id}"]`).value;
+      if (role === 'admin' && !user.isAdmin
+        // eslint-disable-next-line no-alert
+        && !confirm(`Сделать ${user.fullName} администратором? Появится право создавать аккаунты и назначать администраторов.`)) return;
       if (role === 'teacher' && user.role !== 'teacher'
         // eslint-disable-next-line no-alert
         && !confirm(`Сделать ${user.fullName} учителем? Появится доступ к заявкам, проверке и начислению баллов.`)) return;
@@ -394,6 +400,42 @@ function wireActions() {
 
   document.getElementById('awards-filter').addEventListener('change', () => guard(renderAwards));
   ['t-class', 't-subject', 't-period'].forEach((id) => document.getElementById(id).addEventListener('change', () => guard(renderRating)));
+  // ---------- создание пользователя (только администратор) ----------
+  const cuRole = document.getElementById('cu-role');
+  const syncCreateForm = () => { document.getElementById('cu-class-field').hidden = cuRole.value !== 'student'; };
+  cuRole.addEventListener('change', syncCreateForm);
+  document.getElementById('cu-generate').addEventListener('click', () => {
+    const abc = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    const bytes = crypto.getRandomValues(new Uint8Array(10));
+    document.getElementById('cu-password').value = Array.from(bytes, (b) => abc[b % abc.length]).join('');
+  });
+  document.getElementById('create-user-btn').addEventListener('click', () => {
+    document.getElementById('create-user-form').reset();
+    document.getElementById('cu-error').textContent = '';
+    syncCreateForm();
+    openModal('create-user-modal');
+    document.getElementById('cu-email').focus();
+  });
+  document.getElementById('create-user-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const val = (id) => document.getElementById(id).value.trim();
+    const data = {
+      email: val('cu-email'), password: document.getElementById('cu-password').value,
+      lastName: val('cu-lastname'), firstName: val('cu-firstname'), middleName: val('cu-middlename'),
+      className: val('cu-class'), role: cuRole.value, status: document.getElementById('cu-status').value,
+    };
+    const btn = e.target.querySelector('[type="submit"]');
+    btn.disabled = true;
+    try {
+      await api.users.create(data);
+      closeModal('create-user-modal');
+      showToast(`${data.lastName} ${data.firstName}: аккаунт создан`);
+      await Promise.all([renderStudents(), renderRegistrations()]);
+    } catch (ex) {
+      document.getElementById('cu-error').textContent = ex.message;
+    } finally { btn.disabled = false; }
+  });
+
   document.getElementById('u-filter').addEventListener('change', drawUsers);
   document.getElementById('u-search').addEventListener('input', drawUsers);
 
@@ -407,6 +449,7 @@ function wireActions() {
 (async function init() {
   ME = await requireRole('teacher');
   if (!ME) return;
+  document.getElementById('create-user-btn').hidden = !ME.isAdmin;
   document.getElementById('c-period').innerHTML = periodSelectHtml(true);
   document.getElementById('a-period').innerHTML = periodSelectHtml(true);
   document.getElementById('t-period').innerHTML = '<option value="">За всё время</option>' + periodSelectHtml(false);
