@@ -23,9 +23,30 @@ function showDone(title, text) {
   document.getElementById('done-text').textContent = text;
   showStep(3);
 }
-async function withBusy(button, fn) {
+/**
+ * Блокирует кнопку формы на время запроса и показывает «Подождите…».
+ * e.submitter нет в старых Safari, поэтому кнопку ищем в самой форме.
+ * Если сервер не ответил за 20 с, кнопка всё равно разблокируется.
+ */
+async function withBusy(e, fn) {
+  const button = e.submitter || e.target.querySelector('[type="submit"]');
+  const label = button.innerHTML;
   button.disabled = true;
-  try { await fn(); } finally { button.disabled = false; }
+  button.textContent = 'Подождите…';
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error('Сервер не отвечает. Проверьте интернет и попробуйте ещё раз.')), 20000);
+  });
+  try { await Promise.race([fn(), timeout]); }
+  catch (ex) { showError(e.target.querySelector('.error-text'), ex.message); }
+  finally { clearTimeout(timer); button.disabled = false; button.innerHTML = label; }
+}
+/** Показывает ошибку заново, даже если текст тот же, — с коротким «встряхиванием». */
+function showError(el, message) {
+  el.textContent = message;
+  el.classList.remove('shake');
+  void el.offsetWidth; // перезапуск анимации
+  el.classList.add('shake');
 }
 
 function startResendCooldown() {
@@ -79,14 +100,14 @@ document.getElementById('login-form').addEventListener('submit', (e) => {
   e.preventDefault();
   const err = document.getElementById('login-error');
   err.textContent = '';
-  withBusy(e.submitter, async () => {
+  withBusy(e, async () => {
     try {
       const user = await api.auth.login(
         document.getElementById('login-email').value,
         document.getElementById('login-password').value,
       );
       window.location.href = user.role === 'teacher' ? 'teacher.html' : 'student.html';
-    } catch (ex) { err.textContent = ex.message; }
+    } catch (ex) { showError(err, ex.message); }
   });
 });
 
@@ -95,7 +116,7 @@ document.getElementById('register-email-form').addEventListener('submit', (e) =>
   e.preventDefault();
   const err = document.getElementById('reg-email-error');
   err.textContent = '';
-  withBusy(e.submitter, async () => {
+  withBusy(e, async () => {
     try {
       REG_EMAIL = await api.auth.requestCode(document.getElementById('reg-email').value);
       document.getElementById('code-email').textContent = REG_EMAIL;
@@ -104,7 +125,7 @@ document.getElementById('register-email-form').addEventListener('submit', (e) =>
       showStep(1);
       startResendCooldown();
       document.getElementById('reg-code').focus();
-    } catch (ex) { err.textContent = ex.message; }
+    } catch (ex) { showError(err, ex.message); }
   });
 });
 
@@ -122,11 +143,11 @@ document.getElementById('register-code-form').addEventListener('submit', (e) => 
   e.preventDefault();
   const err = document.getElementById('reg-code-error');
   err.textContent = '';
-  withBusy(e.submitter, async () => {
+  withBusy(e, async () => {
     try {
       // Уже зарегистрированный человек не должен переписать свою заявку.
       await continueAfterConfirm(await api.auth.verifyCode(REG_EMAIL, document.getElementById('reg-code').value));
-    } catch (ex) { err.textContent = ex.message; }
+    } catch (ex) { showError(err, ex.message); }
   });
 });
 
@@ -135,7 +156,7 @@ document.getElementById('register-details-form').addEventListener('submit', (e) 
   e.preventDefault();
   const err = document.getElementById('reg-details-error');
   err.textContent = '';
-  withBusy(e.submitter, async () => {
+  withBusy(e, async () => {
     try {
       await api.auth.submitRegistration({
         password: document.getElementById('reg-password').value,
@@ -145,7 +166,7 @@ document.getElementById('register-details-form').addEventListener('submit', (e) 
         className: document.getElementById('reg-class').value.trim().toUpperCase(),
       });
       showDone('Заявка отправлена', 'Учитель рассмотрит её и назначит роль — ученик или учитель. После одобрения входите по e-mail и паролю.');
-    } catch (ex) { err.textContent = ex.message; }
+    } catch (ex) { showError(err, ex.message); }
   });
 });
 

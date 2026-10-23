@@ -254,6 +254,12 @@ table.data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .hint strong { color: var(--text); }
 .hint code { background: rgba(75, 227, 107, 0.14); color: var(--green); padding: 1px 7px; border-radius: 6px; font-weight: 700; }
 .error-text { color: var(--state-rejected); font-size: 13.5px; margin: 8px 0 0; min-height: 18px; }
+.error-text.shake { animation: error-shake .35s ease; }
+@keyframes error-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
 
 /* ---------- вход/регистрация ---------- */
 .auth-page { min-height: 100vh; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 480px); }
