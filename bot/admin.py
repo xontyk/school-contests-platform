@@ -1,9 +1,9 @@
 """
 admin.py — служебные команды для владельца портала (ключ service_role из bot/.env).
 
-    python admin.py teacher EMAIL "Фамилия Имя Отчество"
+    python admin.py teacher EMAIL ["Фамилия Имя Отчество"]
         Создать учителя (или сделать учителем существующий аккаунт) без письма.
-        Пароль спрашивается в терминале и нигде не сохраняется.
+        ФИО (если не указано) и пароль спрашиваются в терминале, пароль нигде не сохраняется.
 
     python admin.py clear-demo
         Удалить демо-аккаунты *@lyceum.ru из seed.py вместе с их достижениями,
@@ -24,7 +24,7 @@ DEMO_DOMAIN = "@lyceum.ru"
 
 async def make_teacher(email: str, full_name: str) -> None:
     email = email.strip().lower()
-    parts = full_name.split()
+    parts = (full_name or input("ФИО (Фамилия Имя Отчество): ")).split()
     if len(parts) < 2:
         raise SystemExit("Укажите ФИО в кавычках: \"Фамилия Имя Отчество\"")
     password = getpass.getpass("Пароль (не отображается): ")
@@ -70,8 +70,8 @@ async def clear_demo() -> None:
 
 def main() -> None:
     args = sys.argv[1:]
-    if len(args) == 3 and args[0] == "teacher":
-        asyncio.run(make_teacher(args[1], args[2]))
+    if len(args) in (2, 3) and args[0] == "teacher":
+        asyncio.run(make_teacher(args[1], args[2] if len(args) == 3 else ""))
     elif args == ["clear-demo"]:
         asyncio.run(clear_demo())
     else:
