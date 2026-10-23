@@ -3,17 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Личный кабинет ученика</title>
+  <title>Моя карта — Портал достижений</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-  <nav class="navbar">
+  <nav class="navbar no-print">
     <div class="container">
-      <div class="navbar__brand"><svg class="icon"><use href="#icon-trophy"></use></svg>Школьные конкурсы</div>
+      <div class="navbar__brand"><svg class="icon"><use href="#icon-orbit"></use></svg>Портал достижений</div>
       <div class="navbar__links">
-        <a href="#" data-tab-link="progress" class="active">Мой прогресс</a>
-        <a href="#" data-tab-link="contests">Афиша конкурсов</a>
-        <a href="#" data-tab-link="participations">Мои участия</a>
+        <a href="#" data-tab-link="map" class="active">Моя карта</a>
+        <a href="#" data-tab-link="achievements">Достижения</a>
+        <a href="#" data-tab-link="rating">Рейтинг</a>
       </div>
       <div id="navbar-user"></div>
     </div>
@@ -21,63 +21,139 @@
 
   <main class="container">
 
-    <section class="section tab-panel active" id="tab-progress">
-      <h2 class="section__title">Мой прогресс</h2>
+    <!-- ===================== Моя карта ===================== -->
+    <section class="section tab-panel active" id="tab-map">
+      <div class="flex-between">
+        <h2 class="section__title"><svg class="icon"><use href="#icon-orbit"></use></svg>Моя карта</h2>
+        <button class="btn btn--ghost btn--small no-print" id="print-portfolio-btn"><svg class="icon"><use href="#icon-print"></use></svg>Печать портфолио</button>
+      </div>
+      <p class="section__subtitle">Каждая подтверждённая звезда — одно достижение. Размер и яркость растут вместе с баллами.</p>
 
-      <div class="trophy-shelf">
-        <div class="trophy-shelf__rail" id="trophy-shelf-rail"></div>
-        <div class="trophy-shelf__footer">
-          <div class="level-badge" id="level-badge">Уровень 1</div>
-          <div class="trophy-shelf__progress">
-            <div class="progress-bar-track"><div class="progress-bar-fill" id="progress-bar-fill" style="width:0%"></div></div>
-            <div class="trophy-shelf__next" id="next-level-label">до след. уровня: —</div>
+      <div class="constellation" id="constellation-wrap">
+        <div class="constellation__legend">
+          <span class="constellation__legend-item"><span class="constellation__legend-dot" style="background:var(--subj-physics)"></span>Физика</span>
+          <span class="constellation__legend-item"><span class="constellation__legend-dot" style="background:var(--subj-math)"></span>Математика</span>
+          <span class="constellation__legend-item"><span class="constellation__legend-dot" style="background:var(--subj-cs)"></span>Информатика</span>
+          <span class="constellation__legend-item"><span class="constellation__legend-dot" style="background:#9aa3c7"></span>Проект / волонтёрство</span>
+        </div>
+        <div id="constellation-svg-root"></div>
+      </div>
+
+      <div class="stat-row" id="portfolio-stats"></div>
+    </section>
+
+    <!-- ===================== Достижения ===================== -->
+    <section class="section tab-panel" id="tab-achievements">
+      <div class="flex-between">
+        <h2 class="section__title"><svg class="icon"><use href="#icon-star"></use></svg>Мои достижения</h2>
+        <button class="btn btn--star btn--small no-print" id="add-achievement-btn"><svg class="icon"><use href="#icon-plus-circle"></use></svg>Добавить достижение</button>
+      </div>
+      <p class="section__subtitle">Статус, баллы и комментарий учителя по каждой заявке.</p>
+      <div class="card table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Достижение</th><th>Категория</th><th>Предмет</th><th>Баллы</th><th>Статус</th><th>Комментарий</th></tr></thead>
+          <tbody id="achievements-tbody"></tbody>
+        </table>
+        <div class="empty-state" id="achievements-empty" style="display:none;">Пока нет достижений — добавьте первое!</div>
+      </div>
+    </section>
+
+    <!-- ===================== Рейтинг ===================== -->
+    <section class="section tab-panel" id="tab-rating">
+      <h2 class="section__title"><svg class="icon"><use href="#icon-chart"></use></svg>Рейтинг лицея</h2>
+      <p class="section__subtitle">Баллы считаются только по подтверждённым достижениям.</p>
+      <div class="card">
+        <div class="flex-row no-print" style="margin-bottom:16px;">
+          <div class="field" style="margin:0; min-width:160px;">
+            <label for="rating-class-filter">Класс</label>
+            <select id="rating-class-filter"><option value="">Все классы</option></select>
           </div>
-          <div class="points-plaque">
-            <span class="points-plaque__label">Баллы</span>
-            <span class="points-plaque__value" id="points-label">0</span>
+          <div class="field" style="margin:0; min-width:160px;">
+            <label for="rating-subject-filter">Предмет</label>
+            <select id="rating-subject-filter">
+              <option value="">Все предметы</option>
+              <option value="physics">Физика</option>
+              <option value="math">Математика</option>
+              <option value="cs">Информатика</option>
+            </select>
           </div>
         </div>
-      </div>
-
-      <div class="stat-plaques">
-        <div class="stat-plaque"><strong id="stat-contests">0</strong><span>Конкурсов</span></div>
-        <div class="stat-plaque"><strong id="stat-wins">0</strong><span>Побед</span></div>
-        <div class="stat-plaque"><strong id="stat-diplomas">0</strong><span>Дипломов</span></div>
-      </div>
-    </section>
-
-    <section class="section tab-panel" id="tab-contests">
-      <h2 class="section__title">Афиша конкурсов</h2>
-      <p class="section__subtitle">Выберите конкурс и подайте заявку на участие.</p>
-      <div class="grid" id="contests-grid"></div>
-    </section>
-
-    <section class="section tab-panel" id="tab-participations">
-      <h2 class="section__title">Мои участия</h2>
-      <p class="section__subtitle">Статус, баллы и дипломы по каждому конкурсу.</p>
-      <div class="table-wrap card">
-        <table class="data-table" id="participations-table">
-          <thead>
-            <tr>
-              <th>Конкурс</th>
-              <th>Статус</th>
-              <th>Баллы</th>
-              <th>Место</th>
-              <th>Диплом</th>
-            </tr>
-          </thead>
-          <tbody id="participations-tbody"></tbody>
-        </table>
-        <div class="empty-state" id="participations-empty" style="display:none;">Вы пока не участвуете ни в одном конкурсе — загляните в афишу.</div>
+        <div class="table-wrap">
+          <table class="data-table" id="rating-table">
+            <thead><tr><th>#</th><th>Ученик</th><th>Класс</th><th>Физика</th><th>Математика</th><th>Информатика</th><th>Итого</th></tr></thead>
+            <tbody id="rating-tbody"></tbody>
+          </table>
+        </div>
       </div>
     </section>
 
   </main>
 
+  <!-- ===================== модалка: добавить достижение ===================== -->
+  <div class="modal-overlay hidden no-print" id="achievement-modal-overlay">
+    <div class="modal">
+      <h2>Новое достижение</h2>
+      <form id="achievement-form">
+        <div class="field">
+          <label for="ach-category">Категория</label>
+          <select id="ach-category" required>
+            <option value="academic">Академическое достижение</option>
+            <option value="olympiad">Олимпиада</option>
+            <option value="project">Проект</option>
+            <option value="volunteer">Волонтёрство</option>
+          </select>
+        </div>
+        <div class="field" id="ach-subject-field">
+          <label for="ach-subject">Предмет</label>
+          <select id="ach-subject">
+            <option value="">Общее / не связано с предметом</option>
+            <option value="physics">Физика</option>
+            <option value="math">Математика</option>
+            <option value="cs">Информатика</option>
+          </select>
+        </div>
+        <div class="field-row" id="ach-level-row">
+          <div class="field">
+            <label for="ach-level">Уровень</label>
+            <select id="ach-level"></select>
+          </div>
+          <div class="field">
+            <label for="ach-place">Результат</label>
+            <select id="ach-place">
+              <option value="participant">Участие</option>
+              <option value="3">3 место</option>
+              <option value="2">2 место</option>
+              <option value="1">1 место</option>
+            </select>
+          </div>
+        </div>
+        <div class="field" id="ach-hours-field" style="display:none;">
+          <label for="ach-hours">Количество часов</label>
+          <input id="ach-hours" type="number" min="1" step="1" />
+        </div>
+        <div class="field"><label for="ach-title">Название</label><input id="ach-title" required /></div>
+        <div class="field"><label for="ach-description">Описание (необязательно)</label><textarea id="ach-description" rows="2"></textarea></div>
+        <div class="field-row">
+          <div class="field"><label for="ach-date">Дата</label><input id="ach-date" type="date" required /></div>
+          <div class="field"><label for="ach-period">Период</label><input id="ach-period" placeholder="2025/2026, I четверть" required /></div>
+        </div>
+        <div class="hint-box">
+          <strong>Баллы за это достижение: <span id="ach-points-preview">0</span></strong><br />
+          Баллы начисляются автоматически по прозрачной таблице и станут видны в рейтинге только после подтверждения учителем.
+        </div>
+        <div class="modal__actions">
+          <button type="button" class="btn btn--ghost" id="achievement-cancel-btn">Отмена</button>
+          <button type="submit" class="btn btn--star">Отправить на проверку</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script src="js/db.js"></script>
   <script src="js/api.js"></script>
+  <script src="js/points.js"></script>
   <script src="js/common.js"></script>
-  <script src="js/diploma.js"></script>
+  <script src="js/constellation.js"></script>
   <script src="js/student.js"></script>
 </body>
 </html>

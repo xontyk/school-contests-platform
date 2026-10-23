@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Кабинет учителя — Портал достижений</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <div class="navbar__brand"><svg class="icon"><use href="#icon-orbit"></use></svg>Кабинет учителя</div>
+      <div class="navbar__links"></div>
+      <div id="navbar-user"></div>
+    </div>
+  </nav>
+
+  <main class="container">
+    <section class="section">
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="registrations"><svg class="icon"><use href="#icon-mail"></use></svg>Заявки на регистрацию<span class="badge-count" id="count-registrations" style="display:none;">0</span></button>
+        <button class="tab-btn" data-tab="verify"><svg class="icon"><use href="#icon-star"></use></svg>Достижения на проверке<span class="badge-count" id="count-verify" style="display:none;">0</span></button>
+        <button class="tab-btn" data-tab="students"><svg class="icon"><use href="#icon-user"></use></svg>Ученики</button>
+        <button class="tab-btn" data-tab="rating"><svg class="icon"><use href="#icon-chart"></use></svg>Рейтинг</button>
+      </div>
+
+      <!-- ===================== Заявки на регистрацию ===================== -->
+      <div class="tab-panel active" id="panel-registrations">
+        <p class="section__subtitle">Новый пользователь получает доступ только после вашего решения — вы же назначаете роль.</p>
+        <div class="card table-wrap">
+          <table class="data-table">
+            <thead><tr><th>ФИО</th><th>E-mail</th><th>Класс</th><th>Подана</th><th></th></tr></thead>
+            <tbody id="registrations-tbody"></tbody>
+          </table>
+          <div class="empty-state" id="registrations-empty" style="display:none;">Новых заявок нет.</div>
+        </div>
+      </div>
+
+      <!-- ===================== Достижения на проверке ===================== -->
+      <div class="tab-panel" id="panel-verify">
+        <p class="section__subtitle">Подтвердите или отклоните с комментарием — баллы попадут в рейтинг только после подтверждения.</p>
+        <div class="card table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Ученик</th><th>Достижение</th><th>Категория</th><th>Предмет</th><th>Баллы</th><th></th></tr></thead>
+            <tbody id="verify-tbody"></tbody>
+          </table>
+          <div class="empty-state" id="verify-empty" style="display:none;">Нечего проверять — все заявки рассмотрены.</div>
+        </div>
+      </div>
+
+      <!-- ===================== Ученики ===================== -->
+      <div class="tab-panel" id="panel-students">
+        <div class="flex-between" style="margin-bottom:14px;">
+          <p class="section__subtitle" style="margin:0;">Можно добавить достижение любому ученику напрямую — оно сразу подтверждено.</p>
+        </div>
+        <div class="card table-wrap">
+          <table class="data-table">
+            <thead><tr><th>ФИО</th><th>Класс</th><th>Достижений</th><th>Баллов</th><th></th></tr></thead>
+            <tbody id="students-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===================== Рейтинг ===================== -->
+      <div class="tab-panel" id="panel-rating">
+        <div class="flex-between">
+          <p class="section__subtitle" style="margin:0;">Тот же рейтинг, что видят ученики, плюс выгрузка в CSV для отчёта.</p>
+          <button class="btn btn--ghost btn--small" id="download-rating-csv"><svg class="icon"><use href="#icon-download"></use></svg>Скачать CSV</button>
+        </div>
+        <div class="card">
+          <div class="flex-row" style="margin-bottom:16px;">
+            <div class="field" style="margin:0; min-width:160px;">
+              <label for="teacher-rating-class">Класс</label>
+              <select id="teacher-rating-class"><option value="">Все классы</option></select>
+            </div>
+            <div class="field" style="margin:0; min-width:160px;">
+              <label for="teacher-rating-subject">Предмет</label>
+              <select id="teacher-rating-subject">
+                <option value="">Все предметы</option>
+                <option value="physics">Физика</option>
+                <option value="math">Математика</option>
+                <option value="cs">Информатика</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table" id="teacher-rating-table">
+              <thead><tr><th>#</th><th>Ученик</th><th>Класс</th><th>Физика</th><th>Математика</th><th>Информатика</th><th>Итого</th></tr></thead>
+              <tbody id="teacher-rating-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===================== модалка: решение по заявке на регистрацию ===================== -->
+  <div class="modal-overlay hidden" id="reg-decision-overlay">
+    <div class="modal">
+      <h2 id="reg-decision-title">Заявка на регистрацию</h2>
+      <div id="reg-decision-summary" style="font-size:14px; color:var(--ink-muted); margin-bottom:16px;"></div>
+      <div id="reg-approve-block">
+        <div class="field">
+          <label for="reg-role-select">Назначить роль</label>
+          <select id="reg-role-select">
+            <option value="student">Ученик</option>
+            <option value="teacher">Учитель</option>
+          </select>
+        </div>
+        <div class="modal__actions">
+          <button type="button" class="btn btn--ghost" id="reg-decision-cancel">Отмена</button>
+          <button type="button" class="btn btn--danger" id="reg-decision-reject"><svg class="icon"><use href="#icon-x-circle"></use></svg>Отклонить</button>
+          <button type="button" class="btn btn--star" id="reg-decision-approve"><svg class="icon"><use href="#icon-check-circle"></use></svg>Одобрить</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== модалка: отклонение (причина) ===================== -->
+  <div class="modal-overlay hidden" id="reg-reject-overlay">
+    <div class="modal">
+      <h2>Причина отклонения</h2>
+      <div class="field"><label for="reg-reject-reason">Комментарий ученику</label><textarea id="reg-reject-reason" rows="3"></textarea></div>
+      <div class="modal__actions">
+        <button type="button" class="btn btn--ghost" id="reg-reject-cancel">Назад</button>
+        <button type="button" class="btn btn--danger" id="reg-reject-confirm">Отклонить заявку</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== модалка: верификация достижения ===================== -->
+  <div class="modal-overlay hidden" id="verify-overlay">
+    <div class="modal">
+      <h2>Проверка достижения</h2>
+      <div id="verify-summary" style="font-size:14px; color:var(--ink-muted); margin-bottom:16px;"></div>
+      <div class="field"><label for="verify-points">Баллы (можно скорректировать)</label><input id="verify-points" type="number" min="0" /></div>
+      <div class="field"><label for="verify-comment">Комментарий ученику</label><textarea id="verify-comment" rows="3" placeholder="Необязательно для подтверждения, обязательно для отклонения"></textarea></div>
+      <div class="modal__actions">
+        <button type="button" class="btn btn--ghost" id="verify-cancel">Отмена</button>
+        <button type="button" class="btn btn--danger" id="verify-reject"><svg class="icon"><use href="#icon-x-circle"></use></svg>Отклонить</button>
+        <button type="button" class="btn btn--star" id="verify-approve"><svg class="icon"><use href="#icon-check-circle"></use></svg>Подтвердить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== модалка: добавить достижение ученику ===================== -->
+  <div class="modal-overlay hidden" id="teacher-add-overlay">
+    <div class="modal">
+      <h2>Добавить достижение ученику</h2>
+      <form id="teacher-add-form">
+        <div class="field"><label for="ta-student-name"></label><input type="hidden" id="ta-user-id" /><div id="ta-student-name" style="font-weight:700;color:var(--space);margin-bottom:10px;"></div></div>
+        <div class="field">
+          <label for="ta-category">Категория</label>
+          <select id="ta-category" required>
+            <option value="academic">Академическое достижение</option>
+            <option value="olympiad">Олимпиада</option>
+            <option value="project">Проект</option>
+            <option value="volunteer">Волонтёрство</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="ta-subject">Предмет</label>
+          <select id="ta-subject">
+            <option value="">Общее / не связано с предметом</option>
+            <option value="physics">Физика</option>
+            <option value="math">Математика</option>
+            <option value="cs">Информатика</option>
+          </select>
+        </div>
+        <div class="field-row" id="ta-level-row">
+          <div class="field"><label for="ta-level">Уровень</label><select id="ta-level"></select></div>
+          <div class="field">
+            <label for="ta-place">Результат</label>
+            <select id="ta-place">
+              <option value="participant">Участие</option>
+              <option value="3">3 место</option>
+              <option value="2">2 место</option>
+              <option value="1">1 место</option>
+            </select>
+          </div>
+        </div>
+        <div class="field" id="ta-hours-field" style="display:none;"><label for="ta-hours">Часы</label><input id="ta-hours" type="number" min="1" /></div>
+        <div class="field"><label for="ta-title">Название</label><input id="ta-title" required /></div>
+        <div class="field-row">
+          <div class="field"><label for="ta-date">Дата</label><input id="ta-date" type="date" required /></div>
+          <div class="field"><label for="ta-period">Период</label><input id="ta-period" placeholder="2025/2026, I четверть" required /></div>
+        </div>
+        <div class="hint-box"><strong>Баллы: <span id="ta-points-preview">0</span></strong> — достижение сразу получит статус «Подтверждено».</div>
+        <div class="modal__actions">
+          <button type="button" class="btn btn--ghost" id="teacher-add-cancel">Отмена</button>
+          <button type="submit" class="btn btn--star">Добавить и подтвердить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/db.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/points.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/teacher.js"></script>
+</body>
+</html>

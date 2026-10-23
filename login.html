@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Вход и регистрация — Портал достижений</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="auth-page">
+    <div class="auth-card">
+      <h1><svg class="icon"><use href="#icon-orbit"></use></svg>Портал достижений лицея</h1>
+      <p class="subtitle">Физика · Математика · Информатика</p>
+
+      <div class="auth-tabs">
+        <button class="auth-tab" id="tab-login-btn" type="button">Вход</button>
+        <button class="auth-tab" id="tab-register-btn" type="button">Регистрация</button>
+      </div>
+
+      <!-- ===================== ВХОД ===================== -->
+      <div class="auth-step" id="panel-login">
+        <form id="login-form">
+          <div class="field">
+            <label for="login-email">E-mail</label>
+            <input id="login-email" type="email" autocomplete="username" required />
+          </div>
+          <div class="field">
+            <label for="login-password">Пароль</label>
+            <input id="login-password" type="password" autocomplete="current-password" required />
+          </div>
+          <p class="error-text" id="login-error"></p>
+          <button type="submit" class="btn btn--star" style="width:100%"><svg class="icon"><use href="#icon-orbit"></use></svg>Войти</button>
+        </form>
+        <div class="hint-box">
+          <strong>Тестовые аккаунты</strong><br />
+          Ученик: <code>petr@lyceum.ru</code> / <code>1234</code> (и anna, danil, maria, timur, eva — пароль 1234)<br />
+          Учитель: <code>teacher@lyceum.ru</code> / <code>teacher123</code>
+        </div>
+      </div>
+
+      <!-- ===================== РЕГИСТРАЦИЯ: шаг 1 — email ===================== -->
+      <div class="auth-step" id="panel-register-1">
+        <div class="auth-steps-dots"><span class="current"></span><span></span><span></span></div>
+        <form id="register-email-form">
+          <div class="field">
+            <label for="reg-email"><svg class="icon" style="width:13px;height:13px;vertical-align:-2px;"><use href="#icon-mail"></use></svg> Ваш e-mail</label>
+            <input id="reg-email" type="email" placeholder="imya@lyceum.ru" required />
+          </div>
+          <p class="error-text" id="reg-email-error"></p>
+          <button type="submit" class="btn btn--star" style="width:100%">Отправить код подтверждения</button>
+        </form>
+      </div>
+
+      <!-- ===================== РЕГИСТРАЦИЯ: шаг 2 — код ===================== -->
+      <div class="auth-step" id="panel-register-2">
+        <div class="auth-steps-dots"><span class="done"></span><span class="current"></span><span></span></div>
+        <button class="back-link" id="back-to-step1" type="button">&larr; Изменить e-mail</button>
+        <div class="code-display">
+          <span class="code-display__value" id="demo-code-value">······</span>
+          <small>Демо-режим: реальная почта не отправляется — код сразу показан здесь, как будто он пришёл вам на <span id="demo-code-email"></span></small>
+        </div>
+        <form id="register-code-form">
+          <div class="field">
+            <label for="reg-code">Код из письма</label>
+            <input id="reg-code" type="text" inputmode="numeric" maxlength="6" placeholder="000000" required />
+          </div>
+          <p class="error-text" id="reg-code-error"></p>
+          <button type="submit" class="btn btn--star" style="width:100%">Подтвердить код</button>
+        </form>
+      </div>
+
+      <!-- ===================== РЕГИСТРАЦИЯ: шаг 3 — пароль + ФИО ===================== -->
+      <div class="auth-step" id="panel-register-3">
+        <div class="auth-steps-dots"><span class="done"></span><span class="done"></span><span class="current"></span></div>
+        <form id="register-details-form">
+          <div class="field-row">
+            <div class="field"><label for="reg-lastname">Фамилия</label><input id="reg-lastname" required /></div>
+            <div class="field"><label for="reg-firstname">Имя</label><input id="reg-firstname" required /></div>
+          </div>
+          <div class="field"><label for="reg-middlename">Отчество</label><input id="reg-middlename" /></div>
+          <div class="field"><label for="reg-class">Класс (если вы ученик)</label><input id="reg-class" placeholder="например, 10А" /></div>
+          <div class="field"><label for="reg-password">Придумайте пароль</label><input id="reg-password" type="password" minlength="4" required /></div>
+          <p class="error-text" id="reg-details-error"></p>
+          <button type="submit" class="btn btn--star" style="width:100%"><svg class="icon"><use href="#icon-star"></use></svg>Отправить заявку учителю</button>
+        </form>
+      </div>
+
+      <!-- ===================== РЕГИСТРАЦИЯ: готово ===================== -->
+      <div class="auth-step" id="panel-register-done">
+        <div style="text-align:center; padding: 10px 0 6px;">
+          <h1 style="margin-bottom:10px; color: var(--state-approved);"><svg class="icon" style="color:var(--state-approved);"><use href="#icon-check-circle"></use></svg>Заявка отправлена!</h1>
+          <p class="subtitle" style="margin-bottom:6px;">Учитель рассмотрит её и назначит вам роль — ученик или учитель. Как только заявку одобрят, вы сможете войти по e-mail и паролю, которые только что указали.</p>
+        </div>
+        <button class="btn btn--ghost" id="register-done-back" style="width:100%" type="button">К экрану входа</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="js/db.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/login.js"></script>
+</body>
+</html>

@@ -3,40 +3,124 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Платформа школьных конкурсов — вход</title>
+  <title>Портал достижений лицея</title>
+  <meta name="description" content="Карта достижений лицея по физике, математике и информатике: портфолио, рейтинг, верификация учителем." />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-  <div class="login-page">
-    <div class="login-card">
-      <div class="login-card__crest"><svg class="icon"><use href="#icon-trophy"></use></svg></div>
-      <h1>Платформа школьных конкурсов</h1>
-      <p class="subtitle">Войдите, чтобы отслеживать участия и дипломы или управлять конкурсами школы.</p>
-
-      <form id="login-form">
-        <div class="field">
-          <label for="login">Логин</label>
-          <input id="login" name="login" type="text" autocomplete="username" required />
-        </div>
-        <div class="field">
-          <label for="password">Пароль</label>
-          <input id="password" name="password" type="password" autocomplete="current-password" required />
-        </div>
-        <p class="error-text" id="error-text"></p>
-        <button type="submit" class="btn" style="width:100%">Войти</button>
-      </form>
-
-      <div class="hint-box">
-        <strong>Тестовые аккаунты</strong><br />
-        Ученик: <code>petr</code> / <code>1234</code> (и anna, danil, maria, timur — пароль 1234)<br />
-        Администратор: <code>admin</code> / <code>admin123</code>
+  <nav class="navbar">
+    <div class="container">
+      <a href="index.html" class="navbar__brand"><svg class="icon"><use href="#icon-orbit"></use></svg>Портал достижений</a>
+      <div class="navbar__links"></div>
+      <div class="flex-row">
+        <a href="login.html" class="btn btn--ghost btn--small">Войти</a>
+        <a href="login.html?tab=register" class="btn btn--star btn--small"><svg class="icon"><use href="#icon-star"></use></svg>Регистрация</a>
       </div>
     </div>
-  </div>
+  </nav>
+
+  <header class="hero">
+    <div class="container hero__content">
+      <h1>Твои достижения по физике, математике и информатике — <span class="accent">на карте звёзд</span></h1>
+      <p class="lead">Каждая подтверждённая олимпиада, проект или волонтёрский час зажигает свою звезду на твоей персональной карте. Учитель подтверждает, портал сам считает рейтинг и собирает портфолио.</p>
+      <div class="hero__actions">
+        <a href="login.html?tab=register" class="btn btn--star"><svg class="icon"><use href="#icon-star"></use></svg>Зарегистрироваться</a>
+        <a href="login.html" class="btn btn--ghost" style="background:rgba(255,255,255,.1); color:#fff; border-color:rgba(255,255,255,.3);">Уже есть аккаунт — войти</a>
+      </div>
+      <div class="hero__stats" id="hero-stats">
+        <div class="hero__stat"><strong id="stat-students">—</strong><span>учеников</span></div>
+        <div class="hero__stat"><strong id="stat-achievements">—</strong><span>достижений подтверждено</span></div>
+        <div class="hero__stat"><strong id="stat-points">—</strong><span>баллов на карте лицея</span></div>
+      </div>
+    </div>
+  </header>
+
+  <section class="features">
+    <div class="container">
+      <h2 class="section__title">Как устроен портал</h2>
+      <p class="section__subtitle">Три роли, один прозрачный процесс: заявил → подтвердили → появилось на карте и в рейтинге.</p>
+      <div class="features__grid">
+        <div class="feature-card">
+          <h3><svg class="icon feature-card__inline-icon" style="color:var(--subj-physics);"><use href="#icon-atom"></use></svg>Портфолио по направлениям</h3>
+          <p>Физика, математика и информатика — отдельные созвездия в твоей карте, с собственной суммой баллов.</p>
+        </div>
+        <div class="feature-card">
+          <h3><svg class="icon feature-card__inline-icon" style="color:var(--state-approved);"><use href="#icon-check-circle"></use></svg>Верификация учителем</h3>
+          <p>Каждое достижение и каждая новая регистрация проходят подтверждение, рейтинг нельзя накрутить.</p>
+        </div>
+        <div class="feature-card">
+          <h3><svg class="icon feature-card__inline-icon" style="color:var(--brand);"><use href="#icon-chart"></use></svg>Рейтинг по классам и периодам</h3>
+          <p>Топ-10 лицея, фильтры по классу и четверти/году: видно, кто и за что лидирует прямо сейчас.</p>
+        </div>
+        <div class="feature-card">
+          <h3><svg class="icon feature-card__inline-icon" style="color:#b8841f;"><use href="#icon-print"></use></svg>Портфолио на экспорт</h3>
+          <p>Готовая печатная форма для стипендии или поступления, без ручного сбора грамот и справок.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="steps">
+    <div class="container">
+      <h2 class="section__title">Путь одной звезды</h2>
+      <p class="section__subtitle">От заявки до строчки в рейтинге — четыре шага.</p>
+      <div class="steps__list">
+        <div class="step-card"><div class="step-card__num">01</div><h3>Регистрация</h3><p>E‑mail → код подтверждения → пароль и ФИО. Заявка уходит учителю.</p></div>
+        <div class="step-card"><div class="step-card__num">02</div><h3>Учитель одобряет</h3><p>Проверяет заявку, назначает роль «ученик» или «учитель».</p></div>
+        <div class="step-card"><div class="step-card__num">03</div><h3>Достижение на проверку</h3><p>Категория, предмет, уровень — баллы видны сразу, честно и прозрачно.</p></div>
+        <div class="step-card"><div class="step-card__num">04</div><h3>Звезда зажигается</h3><p>Учитель подтверждает — очки уходят в рейтинг, достижение в портфолио.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="points-table-section">
+    <div class="container">
+      <h2 class="section__title">Система баллов</h2>
+      <p class="section__subtitle">Прозрачно и обоснованно: чем выше уровень и место — тем больше баллов. Волонтёрство считается по часам с разумным потолком, чтобы не обесценивать качество помощи количеством заявок.</p>
+      <div class="table-wrap">
+        <table class="points-table">
+          <thead><tr><th>Категория</th><th>Уровень</th><th>Участие</th><th>3 место</th><th>2 место</th><th>1 место</th></tr></thead>
+          <tbody>
+            <tr><td rowspan="5">Олимпиада</td><td>Школьный</td><td>2</td><td>5</td><td>6</td><td>8</td></tr>
+            <tr><td>Муниципальный</td><td>5</td><td>10</td><td>12</td><td>15</td></tr>
+            <tr><td>Региональный</td><td>10</td><td>20</td><td>25</td><td>30</td></tr>
+            <tr><td>Всероссийский</td><td>20</td><td>40</td><td>50</td><td>60</td></tr>
+            <tr><td>Международный</td><td>30</td><td>60</td><td>80</td><td>100</td></tr>
+            <tr><td rowspan="3">Проект</td><td>Школьный</td><td>5</td><td>8</td><td>10</td><td>12</td></tr>
+            <tr><td>Городской</td><td>10</td><td>14</td><td>16</td><td>20</td></tr>
+            <tr><td>Региональный</td><td>15</td><td>20</td><td>25</td><td>30</td></tr>
+            <tr><td>Академическое достижение</td><td>—</td><td colspan="4">5 баллов за подтверждённую заявку</td></tr>
+            <tr><td>Волонтёрство</td><td>—</td><td colspan="4">1 балл за 2 часа, максимум 10 за заявку</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="footer-cta">
+    <div class="container">
+      <h2>Готов зажечь первую звезду?</h2>
+      <p>Регистрация занимает меньше двух минут — остальное сделает учитель.</p>
+      <a href="login.html?tab=register" class="btn btn--star"><svg class="icon"><use href="#icon-star"></use></svg>Начать регистрацию</a>
+    </div>
+  </section>
+
+  <footer class="site-footer container">Портал достижений лицея — учебный прототип, физика · математика · информатика.</footer>
 
   <script src="js/db.js"></script>
   <script src="js/api.js"></script>
   <script src="js/common.js"></script>
-  <script src="js/login.js"></script>
+  <script>
+    (async function initLanding() {
+      const [students, achievements, rating] = await Promise.all([
+        api.users.list({ role: 'student' }),
+        api.achievements.list({ status: 'approved' }),
+        api.rating.compute(),
+      ]);
+      document.getElementById('stat-students').textContent = students.length;
+      document.getElementById('stat-achievements').textContent = achievements.length;
+      document.getElementById('stat-points').textContent = rating.reduce((s, r) => s + r.total, 0);
+    })();
+  </script>
 </body>
 </html>
