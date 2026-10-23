@@ -206,9 +206,9 @@ async function renderRating() {
       <td><span class="rank ${r.rank <= 3 ? 'rank--' + r.rank : ''}">${r.rank}</span></td>
       <td>${escapeHtml(r.name)}${r.userId === ME.id ? ' <strong>(вы)</strong>' : ''}</td>
       <td>${escapeHtml(r.className || '')}</td>
-      <td>${r.physics}</td><td>${r.math}</td><td>${r.cs}</td>
+      <td>${r.physics}</td><td>${r.math}</td><td>${r.cs}</td><td>${r.other}</td>
       <td class="num-strong">${r.total}</td>
-    </tr>`).join('') : '<tr><td colspan="7" class="empty-state">Нет данных для выбранных фильтров.</td></tr>';
+    </tr>`).join('') : '<tr><td colspan="8" class="empty-state">Нет данных для выбранных фильтров.</td></tr>';
 }
 
 // ---------------- (5) Telegram, печать, дипломы ----------------

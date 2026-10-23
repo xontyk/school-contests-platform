@@ -8,7 +8,7 @@
  * обойти правила из браузера нельзя.
  *
  * Разделы: auth, registrations, users, contests, participations,
- * achievements, rating, stats, telegram, reports.
+ * achievements, rating, stats, telegram. Выгрузка в Excel — js/rating-export.js.
  *
  * ПОДСКАЗКА: как читать запрос к базе
  *   sb.from('contests').select('*').order('start_date')  — «дай все конкурсы по дате»
@@ -332,7 +332,10 @@ const api = (() => {
       }));
       return rows.map((r, idx) => ({
         rank: idx + 1, userId: r.user_id, name: r.full_name, className: r.class_name,
-        physics: r.physics, math: r.math, cs: r.cs, total: r.total, achievementsCount: r.achievements_count,
+        physics: r.physics, math: r.math, cs: r.cs,
+        // баллы без предмета (проекты, волонтёрство): иначе «Итого» не сходится с колонками
+        other: r.total - r.physics - r.math - r.cs,
+        total: r.total, achievementsCount: r.achievements_count,
       }));
     },
   };
@@ -351,16 +354,5 @@ const api = (() => {
     },
   };
 
-  const reports = {
-    toCSV(rows) {
-      if (!rows.length) return '';
-      const headers = Object.keys(rows[0]);
-      const escape = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-      const lines = [headers.map(escape).join(',')];
-      rows.forEach((row) => lines.push(headers.map((h) => escape(row[h])).join(',')));
-      return '﻿' + lines.join('\r\n');
-    },
-  };
-
-  return { auth, registrations, users, contests, participations, achievements, rating, stats, telegram, reports };
+  return { auth, registrations, users, contests, participations, achievements, rating, stats, telegram };
 })();

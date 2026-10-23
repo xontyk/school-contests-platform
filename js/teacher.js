@@ -2,7 +2,7 @@
  * teacher.js — кабинет учителя.
  * Блоки: (1) заявки на регистрацию, (2) конкурсы и результаты участников
  * (начисление и отмена наград), (3) проверка достижений, (4) журнал
- * начислений с отменой, (5) пользователи: роль, класс, прямое начисление, (6) рейтинг + CSV.
+ * начислений с отменой, (5) пользователи: роль, класс, прямое начисление, (6) рейтинг + Excel.
  * Любое изменение баллов идёт через RPC-функции базы, которые сами
  * проверяют роль и пишут историю в award_log.
  *
@@ -13,7 +13,7 @@
  * • «Проверка» (достижения на проверке)               → renderVerify(), openVerify()
  * • «Начисления» (отзыв награды, история)             → renderAwards(), showHistory()
  * • «Пользователи» (роли, классы, «Начислить»)        → renderStudents(), drawUsers()
- * • «Рейтинг» и «Скачать CSV»                         → renderRating()
+ * • «Рейтинг» и «Скачать Excel» (сам файл собирает js/rating-export.js)                         → renderRating()
  * • Все нажатия кнопок в таблицах (Принять, Сохранить, Отозвать…) → wireActions()
  * Цифра у вкладки («Заявки 2») — setCount(). Разметка вкладок и окон — teacher.html.
  */
@@ -271,7 +271,7 @@ function updateAddPreview() {
 }
 
 // ================= (6) рейтинг =================
-/** Рейтинг лицея по фильтрам «Класс», «Направление», «Период». */
+/** Рейтинг лицея по фильтрам «Класс», «Направление», «Период»; LAST_RATING уходит в Excel. */
 async function renderRating() {
   const rows = await api.rating.compute({
     className: document.getElementById('t-class').value,
@@ -288,8 +288,8 @@ async function renderRating() {
     <tr>
       <td><span class="rank ${r.rank <= 3 ? 'rank--' + r.rank : ''}">${r.rank}</span></td>
       <td>${escapeHtml(r.name)}</td><td>${escapeHtml(r.className || '')}</td>
-      <td>${r.physics}</td><td>${r.math}</td><td>${r.cs}</td><td class="num-strong">${r.total}</td>
-    </tr>`).join('') : '<tr><td colspan="7" class="empty-state">Нет данных.</td></tr>';
+      <td>${r.physics}</td><td>${r.math}</td><td>${r.cs}</td><td>${r.other}</td><td class="num-strong">${r.total}</td>
+    </tr>`).join('') : '<tr><td colspan="8" class="empty-state">Нет данных.</td></tr>';
 }
 
 // ================= обработчики =================
@@ -468,10 +468,12 @@ function wireActions() {
   document.getElementById('u-filter').addEventListener('change', drawUsers);
   document.getElementById('u-search').addEventListener('input', drawUsers);
 
-  document.getElementById('rating-csv').addEventListener('click', () => {
-    if (!LAST_RATING.length) return;
-    const rows = LAST_RATING.map((r) => ({ Место: r.rank, Ученик: r.name, Класс: r.className, Физика: r.physics, Математика: r.math, Информатика: r.cs, Итого: r.total }));
-    downloadBlob(`rating_${todayISO()}.csv`, api.reports.toCSV(rows), 'text/csv;charset=utf-8');
+  // «Скачать Excel»: файл с оформлением, фильтры подписываются так, как выбраны на экране
+  document.getElementById('rating-xlsx').addEventListener('click', async (e) => {
+    const label = (id) => { const s = document.getElementById(id); return s.options[s.selectedIndex].text.toLowerCase(); };
+    e.currentTarget.disabled = true;
+    await guard(() => exportRatingXlsx(LAST_RATING, { className: label('t-class'), subject: label('t-subject'), period: label('t-period') }), 'Файл Excel скачан');
+    e.currentTarget.disabled = false;
   });
 }
 

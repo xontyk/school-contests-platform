@@ -46,13 +46,15 @@ js/api.js             API-слой: auth, contests, participations, achievements
 js/points.js          таблица баллов для предпросмотра + учебные периоды
 js/constellation.js   карта созвездий (SVG): звезда = подтверждённое достижение
 js/diploma.js         именной диплом в стиле сайта (PNG, canvas)
+js/rating-export.js   выгрузка рейтинга в Excel с оформлением и итогами
 js/common.js          иконки, статусы, уведомления, вкладки
 supabase/schema.sql   схема БД: таблицы, триггеры, RLS, RPC — запускается в Supabase
 bot/bot.py            Telegram-бот
 bot/db.py             доступ бота к базе (PostgREST + Auth Admin API)
 bot/admin.py          создать учителя без письма, удалить демо-данные
 bot/seed.py           демо-данные для локальной проверки (на боевой базе не нужны)
-assets/vendor/        supabase-js 2.49.4 (локально, без CDN)
+assets/vendor/        supabase-js 2.49.4 и ExcelJS 4.4.0 (локально, без CDN)
+assets/brand/         аватарки для Telegram-бота (1024×1024)
 assets/fonts/         Unbounded и Manrope (variable fonts, кириллица)
 ```
 
@@ -96,7 +98,7 @@ assets/fonts/         Unbounded и Manrope (variable fonts, кириллица)
 достижение.
 
 **Рейтинг.** Баллы по физике, математике и информатике, фильтры по классу и
-периоду (четверть / учебный год), топ-10, выгрузка CSV для учителя.
+периоду (четверть / учебный год), топ-10, выгрузка в Excel для учителя (оформленная таблица с итогами, `js/rating-export.js`).
 
 ## Защита от накрутки и краевые случаи
 
