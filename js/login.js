@@ -72,6 +72,7 @@ async function continueAfterConfirm(profile) {
 
 document.getElementById('tab-login-btn').addEventListener('click', () => showTab('login'));
 document.getElementById('tab-register-btn').addEventListener('click', () => showTab('register'));
+document.getElementById('to-register').addEventListener('click', () => showTab('register'));
 
 // ---------- вход ----------
 document.getElementById('login-form').addEventListener('submit', (e) => {

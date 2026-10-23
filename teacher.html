@@ -28,7 +28,7 @@
       <button class="tab-btn" data-tab="contests">Конкурсы</button>
       <button class="tab-btn" data-tab="verify">Проверка <span class="count" id="count-verify" hidden></span></button>
       <button class="tab-btn" data-tab="awards">Начисления</button>
-      <button class="tab-btn" data-tab="students">Ученики</button>
+      <button class="tab-btn" data-tab="students">Пользователи</button>
       <button class="tab-btn" data-tab="rating">Рейтинг</button>
     </div>
 
@@ -92,11 +92,22 @@
     <!-- ===================== Ученики ===================== -->
     <section class="tab-panel" id="panel-students">
       <div class="card">
-        <h2 class="card-title">Ученики</h2>
-        <p class="card-sub">Можно начислить достижение любому ученику напрямую — оно сразу подтверждено и попадёт в историю.</p>
+        <h2 class="card-title">Пользователи</h2>
+        <p class="card-sub">Все зарегистрированные. Меняйте роль и класс, возвращайте отклонённых. Ученику можно начислить достижение напрямую — оно сразу подтверждено и попадёт в историю.</p>
+        <div class="flex-row" style="margin-bottom:6px;">
+          <div class="field" style="margin:0; min-width:170px;"><label for="u-filter">Показать</label>
+            <select id="u-filter">
+              <option value="">Всех</option>
+              <option value="student">Учеников</option>
+              <option value="teacher">Учителей</option>
+              <option value="rejected">Отклонённых</option>
+            </select>
+          </div>
+          <div class="field" style="margin:0; min-width:240px;"><label for="u-search">Поиск</label><input id="u-search" type="search" placeholder="ФИО или e-mail" /></div>
+        </div>
         <div class="table-wrap">
           <table class="data-table">
-            <thead><tr><th>ФИО</th><th>Класс</th><th>E-mail</th><th>Telegram</th><th>Баллы</th><th></th></tr></thead>
+            <thead><tr><th>ФИО</th><th>E-mail</th><th>Роль</th><th>Класс</th><th>Telegram</th><th>Баллы</th><th></th></tr></thead>
             <tbody id="students-tbody"></tbody>
           </table>
         </div>

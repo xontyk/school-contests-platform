@@ -17,8 +17,8 @@ const api = (() => {
   const AUTH_ERRORS = {
     'Invalid login credentials': 'Неверный e-mail или пароль.',
     'Token has expired or is invalid': 'Неверный или устаревший код. Запросите новый.',
-    'Email rate limit exceeded': 'Слишком много писем за короткое время. Подождите и попробуйте снова.',
-    'email rate limit exceeded': 'Слишком много писем за короткое время. Подождите и попробуйте снова.',
+    'Email rate limit exceeded': 'Почтовый лимит исчерпан: сайт может отправить лишь несколько писем в час. Попробуйте через час или попросите учителя.',
+    'email rate limit exceeded': 'Почтовый лимит исчерпан: сайт может отправить лишь несколько писем в час. Попробуйте через час или попросите учителя.',
     'Password should be at least 6 characters.': 'Пароль должен быть не короче 6 символов.',
   };
 
@@ -161,6 +161,24 @@ const api = (() => {
       const rows = unwrap(await sb.from('profiles').select('*')
         .eq('role', 'student').eq('status', 'approved').order('last_name'));
       return rows.map(toProfile);
+    },
+    /** Все, по кому учитель уже принял решение: ученики, учителя и отклонённые. */
+    async listAll() {
+      const rows = unwrap(await sb.from('profiles').select('*')
+        .in('status', ['approved', 'rejected']).order('role').order('last_name'));
+      return rows.map(toProfile);
+    },
+    /** Сменить роль и класс (или вернуть отклонённого). Пускают RLS и триггер protect_profile только учителя. */
+    async setRole(userId, role, className) {
+      if (!['student', 'teacher'].includes(role)) throw new Error('Неизвестная роль');
+      const { data: { user } } = await sb.auth.getUser();
+      if (user && user.id === userId) throw new Error('Свою роль поменять нельзя — попросите другого учителя.');
+      const rows = unwrap(await sb.from('profiles').update({
+        role, status: 'approved', rejection_reason: null,
+        class_name: role === 'student' ? (className || '').trim().toUpperCase() || null : null,
+        decided_by: user ? user.id : null, decided_at: new Date().toISOString(),
+      }).eq('id', userId).select('id'));
+      if (!rows.length) throw new Error('Не удалось изменить: нет прав или пользователь не найден');
     },
   };
 

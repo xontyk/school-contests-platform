@@ -2,7 +2,7 @@
  * teacher.js — кабинет учителя.
  * Блоки: (1) заявки на регистрацию, (2) конкурсы и результаты участников
  * (начисление и отмена наград), (3) проверка достижений, (4) журнал
- * начислений с отменой, (5) ученики и прямое начисление, (6) рейтинг + CSV.
+ * начислений с отменой, (5) пользователи: роль, класс, прямое начисление, (6) рейтинг + CSV.
  * Любое изменение баллов идёт через RPC-функции базы, которые сами
  * проверяют роль и пишут историю в award_log.
  */
@@ -191,19 +191,42 @@ async function showHistory(achievementId) {
   openModal('history-modal');
 }
 
-// ================= (5) ученики =================
+// ================= (5) пользователи: роль, класс, начисление =================
+let USERS = [];
+let TOTALS = {};
+
 async function renderStudents() {
-  const [students, rating] = await Promise.all([api.users.listStudents(), api.rating.compute()]);
-  const totals = Object.fromEntries(rating.map((r) => [r.userId, r.total]));
-  document.getElementById('students-tbody').innerHTML = students.length ? students.map((s) => `
+  const [users, rating] = await Promise.all([api.users.listAll(), api.rating.compute()]);
+  USERS = users;
+  TOTALS = Object.fromEntries(rating.map((r) => [r.userId, r.total]));
+  drawUsers();
+}
+
+function drawUsers() {
+  const filter = document.getElementById('u-filter').value;
+  const q = document.getElementById('u-search').value.trim().toLowerCase();
+  const list = USERS.filter((u) => {
+    if (filter === 'rejected' ? u.status !== 'rejected' : (filter && (u.status !== 'approved' || u.role !== filter))) return false;
+    return !q || `${u.fullName} ${u.email}`.toLowerCase().includes(q);
+  });
+  document.getElementById('students-tbody').innerHTML = list.length ? list.map((u) => {
+    const self = ME && u.id === ME.id;
+    const rejected = u.status === 'rejected';
+    const opt = (v, label) => `<option value="${v}"${u.role === v ? ' selected' : ''}>${label}</option>`;
+    return `
     <tr>
-      <td>${escapeHtml(s.fullName)}</td>
-      <td>${escapeHtml(s.className || '—')}</td>
-      <td class="muted">${escapeHtml(s.email)}</td>
-      <td>${s.telegramLinked ? '<span class="badge badge--approved">Подключён</span>' : '<span class="muted">—</span>'}</td>
-      <td class="num-strong">${totals[s.id] || 0}</td>
-      <td><button class="btn btn--outline btn--small" data-add-for="${s.id}" data-name="${escapeHtml(s.fullName)}">${icon('plus')}Начислить</button></td>
-    </tr>`).join('') : '<tr><td colspan="6" class="empty-state">Одобренных учеников пока нет.</td></tr>';
+      <td>${escapeHtml(u.fullName)}${self ? ' <span class="muted">(вы)</span>' : ''}${rejected ? `<br><span class="badge badge--rejected" title="${escapeHtml(u.rejectionReason || '')}">Отклонён</span>` : ''}</td>
+      <td class="muted">${escapeHtml(u.email)}</td>
+      <td><div class="field" style="margin:0; min-width:120px;"><select data-user-role="${u.id}" aria-label="Роль"${self ? ' disabled' : ''}>${opt('student', 'Ученик')}${opt('teacher', 'Учитель')}</select></div></td>
+      <td><div class="field" style="margin:0; width:80px;"><input data-user-class="${u.id}" value="${escapeHtml(u.className || '')}" placeholder="—" aria-label="Класс"${self ? ' disabled' : ''} /></div></td>
+      <td>${u.telegramLinked ? '<span class="badge badge--approved">Подключён</span>' : '<span class="muted">—</span>'}</td>
+      <td class="num-strong">${u.role === 'student' && !rejected ? TOTALS[u.id] || 0 : '—'}</td>
+      <td><div class="flex-row" style="flex-wrap:nowrap;">
+        ${self ? '' : `<button class="btn btn--small${rejected ? '' : ' btn--outline'}" data-save-user="${u.id}">${icon('check')}${rejected ? 'Вернуть' : 'Сохранить'}</button>`}
+        ${u.role === 'student' && !rejected ? `<button class="btn btn--outline btn--small" data-add-for="${u.id}" data-name="${escapeHtml(u.fullName)}">${icon('plus')}Начислить</button>` : ''}
+      </div></td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="7" class="empty-state">Никого не нашлось.</td></tr>';
 }
 
 function syncAddForm() {
@@ -287,6 +310,18 @@ function wireActions() {
       }
     } else if ((el = t('[data-history]'))) {
       await guard(() => showHistory(Number(el.dataset.history)));
+    } else if ((el = t('[data-save-user]'))) {
+      const id = el.dataset.saveUser;
+      const user = USERS.find((u) => u.id === id);
+      const role = document.querySelector(`[data-user-role="${id}"]`).value;
+      const className = document.querySelector(`[data-user-class="${id}"]`).value;
+      if (role === 'teacher' && user.role !== 'teacher'
+        // eslint-disable-next-line no-alert
+        && !confirm(`Сделать ${user.fullName} учителем? Появится доступ к заявкам, проверке и начислению баллов.`)) return;
+      el.disabled = true;
+      if (await guard(() => api.users.setRole(id, role, className), `${user.fullName}: ${ROLE_LABELS[role].toLowerCase()}${role === 'student' && className ? ', ' + className.toUpperCase() : ''}`)) {
+        await Promise.all([renderStudents(), renderRating()]);
+      } else el.disabled = false;
     } else if ((el = t('[data-add-for]'))) {
       document.getElementById('add-form').reset();
       document.getElementById('a-user').value = el.dataset.addFor;
@@ -359,6 +394,9 @@ function wireActions() {
 
   document.getElementById('awards-filter').addEventListener('change', () => guard(renderAwards));
   ['t-class', 't-subject', 't-period'].forEach((id) => document.getElementById(id).addEventListener('change', () => guard(renderRating)));
+  document.getElementById('u-filter').addEventListener('change', drawUsers);
+  document.getElementById('u-search').addEventListener('input', drawUsers);
+
   document.getElementById('rating-csv').addEventListener('click', () => {
     if (!LAST_RATING.length) return;
     const rows = LAST_RATING.map((r) => ({ Место: r.rank, Ученик: r.name, Класс: r.className, Физика: r.physics, Математика: r.math, Информатика: r.cs, Итого: r.total }));
