@@ -147,6 +147,11 @@ const api = (() => {
       unwrap(await sb.auth.resetPasswordForEmail(normalized, { redirectTo }));
       return normalized;
     },
+    /** Код из письма «Сброс пароля» (тот же вход, что и по ссылке): открывает сессию для нового пароля. */
+    async verifyResetCode(email, code) {
+      unwrap(await sb.auth.verifyOtp({ email: email.trim().toLowerCase(), token: String(code).trim(), type: 'recovery' }));
+      return myProfile();
+    },
     /** Новый пароль для сессии, открытой ссылкой из письма; после — выход, вход уже с новым паролем. */
     async setNewPassword(password) {
       if (!password || password.length < 6) throw new Error('Пароль должен быть не короче 6 символов.');

@@ -57,10 +57,15 @@
       </section>
 
       <section class="auth-step" id="panel-reset-sent">
-        <svg class="sparkle" style="width:48px;height:48px;margin-bottom:16px;" aria-hidden="true"><use href="#icon-sparkle"></use></svg>
-        <h2>Проверьте почту</h2>
-        <p class="lead">Если аккаунт <strong id="reset-sent-email"></strong> существует, на него придёт письмо (загляните в «Спам»). Откройте ссылку из письма на этом же устройстве, и сразу появится форма нового пароля.</p>
-        <button class="btn btn--outline btn--block" type="button" data-to-login>К входу</button>
+        <button class="back-link" type="button" data-to-reset>&larr; Изменить e-mail</button>
+        <h2>Введите код</h2>
+        <p class="lead">Если аккаунт <strong id="reset-sent-email"></strong> существует, на него придёт письмо с кодом (загляните в «Спам»). Можно и просто нажать ссылку в письме на этом же устройстве.</p>
+        <form id="reset-code-form">
+          <div class="field"><label for="reset-code">Код из письма</label><input id="reset-code" class="code-input" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="······" required /></div>
+          <p class="error-text" id="reset-code-error" role="alert"></p>
+          <button type="submit" class="btn btn--block">Подтвердить</button>
+        </form>
+        <button class="btn btn--outline btn--block" id="resend-reset" type="button" style="margin-top:10px;">Отправить письмо ещё раз</button>
       </section>
 
       <section class="auth-step" id="panel-reset-2">
@@ -91,7 +96,7 @@
         <div class="steps-dots"><span class="done"></span><span class="current"></span><span></span></div>
         <button class="back-link" id="back-to-step1" type="button">&larr; Изменить e-mail</button>
         <h2>Подтвердите e-mail</h2>
-        <p class="lead">Отправили письмо на <strong id="code-email"></strong> (проверьте «Спам»). Нажмите в нём ссылку, и откроется следующий шаг. Если в письме пришёл код, введите его здесь.</p>
+        <p class="lead">Отправили письмо на <strong id="code-email"></strong> (проверьте «Спам»). Введите код из письма. Можно и просто нажать ссылку в письме, тогда следующий шаг откроется сам.</p>
         <form id="register-code-form">
           <div class="field"><label for="reg-code">Код</label><input id="reg-code" class="code-input" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="······" required /></div>
           <p class="error-text" id="reg-code-error" role="alert"></p>

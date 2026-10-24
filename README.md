@@ -142,9 +142,13 @@ assets/fonts/         Unbounded и Manrope (variable fonts, кириллица)
    добавить `https://xontyk.github.io/school-contests-platform/**` и
    `http://localhost:5173/**`. Без SMTP письмо приходит со ссылкой: она
    возвращает на `login.html`, и регистрация продолжается с шага «Пароль и ФИО».
-3. По желанию: после подключения SMTP шаблоны писем становятся редактируемыми
-   (**Authentication → Emails → Templates**), и в *Confirm signup* и
-   *Magic link* можно вставить код `{{ .Token }}` — тогда придёт 6-значный код.
+3. **Код в письмах.** Шаблоны Supabase по умолчанию содержат только ссылку,
+   а редактировать их можно только после подключения SMTP (пункт 4). Затем в
+   **Authentication → Emails → Templates** замените текст трёх шаблонов
+   готовыми файлами из `supabase/email-templates/`: *Confirm sign up* →
+   `confirm-signup.html`, *Magic link* → `magic-link.html`, *Reset password* →
+   `reset-password.html`. В письме будет крупный код и кнопка-ссылка; сайт
+   принимает и то и другое.
 4. **Обязательно для настоящих пользователей.** Встроенная почта Supabase
    отправляет всего пару писем в час (ошибка «Почтовый лимит исчерпан»).
    Подключите SMTP в **Authentication → Emails → SMTP Settings**, например

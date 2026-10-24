@@ -67,14 +67,14 @@ function showError(el, message) {
 }
 
 // кнопка «Отправить ещё раз» блокируется на 60 секунд (защита от лимита писем)
-function startResendCooldown() {
-  const btn = document.getElementById('resend-code');
+function startResendCooldown(btnId = 'resend-code', label = 'Отправить код ещё раз') {
+  const btn = document.getElementById(btnId);
   let left = 60;
   btn.disabled = true;
   clearInterval(RESEND_TIMER);
   RESEND_TIMER = setInterval(() => {
     left -= 1;
-    btn.textContent = left > 0 ? `Отправить ещё раз через ${left} с` : 'Отправить код ещё раз';
+    btn.textContent = left > 0 ? `Отправить ещё раз через ${left} с` : label;
     if (left <= 0) { clearInterval(RESEND_TIMER); btn.disabled = false; }
   }, 1000);
 }
@@ -91,6 +91,18 @@ async function continueAfterConfirm(profile) {
   setTabs('register');
   showStep(2);
   document.getElementById('reg-lastname').focus();
+}
+
+let RESET_EMAIL = '';
+
+/** Форма нового пароля: после ссылки или кода из письма «Сброс пароля». */
+function showNewPasswordForm(profile) {
+  // по письму пришёл человек, не закончивший регистрацию, — у него ещё нет пароля и ФИО
+  if (!profile.registrationCompleted) return continueAfterConfirm(profile);
+  document.getElementById('reset-account').textContent = profile.email;
+  setTabs('login');
+  showPanel('panel-reset-2');
+  document.getElementById('reset-password').focus();
 }
 
 function showResetRequest(email, error) {
@@ -111,13 +123,7 @@ function showResetRequest(email, error) {
 
   if (isReset) {
     if (!profile) return showResetRequest('', 'Эта ссылка устарела или уже использована. Запросите новое письмо.');
-    // по ссылке пришёл человек, не закончивший регистрацию, — у него ещё нет пароля и ФИО
-    if (!profile.registrationCompleted) return continueAfterConfirm(profile);
-    document.getElementById('reset-account').textContent = profile.email;
-    setTabs('login');
-    showPanel('panel-reset-2');
-    document.getElementById('reset-password').focus();
-    return;
+    return showNewPasswordForm(profile);
   }
   if (profile && profile.status === 'approved' && profile.registrationCompleted) {
     window.location.href = profile.role === 'teacher' ? 'teacher.html' : 'student.html';
@@ -139,19 +145,43 @@ document.getElementById('tab-register-btn').addEventListener('click', () => show
 document.getElementById('to-register').addEventListener('click', () => showTab('register'));
 document.getElementById('to-reset').addEventListener('click', () => showResetRequest(document.getElementById('login-email').value.trim()));
 document.querySelectorAll('[data-to-login]').forEach((b) => b.addEventListener('click', () => showTab('login')));
+document.querySelectorAll('[data-to-reset]').forEach((b) => b.addEventListener('click', () => showResetRequest(RESET_EMAIL)));
 
-// ---------- восстановление пароля ----------
+// ---------- восстановление пароля: e-mail → код (или ссылка) из письма → новый пароль ----------
 document.getElementById('reset-email-form').addEventListener('submit', (e) => {
   e.preventDefault();
   const err = document.getElementById('reset-email-error');
   err.textContent = '';
   withBusy(e, async () => {
     try {
-      const email = await api.auth.requestPasswordReset(document.getElementById('reset-email').value);
-      document.getElementById('reset-sent-email').textContent = email;
+      RESET_EMAIL = await api.auth.requestPasswordReset(document.getElementById('reset-email').value);
+      document.getElementById('reset-sent-email').textContent = RESET_EMAIL;
+      document.getElementById('reset-code').value = '';
+      document.getElementById('reset-code-error').textContent = '';
       showPanel('panel-reset-sent');
+      startResendCooldown('resend-reset', 'Отправить письмо ещё раз');
+      document.getElementById('reset-code').focus();
     } catch (ex) { showError(err, ex.message); }
   });
+});
+
+document.getElementById('reset-code-form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const err = document.getElementById('reset-code-error');
+  err.textContent = '';
+  withBusy(e, async () => {
+    try {
+      showNewPasswordForm(await api.auth.verifyResetCode(RESET_EMAIL, document.getElementById('reset-code').value));
+    } catch (ex) { showError(err, ex.message); }
+  });
+});
+
+document.getElementById('resend-reset').addEventListener('click', async () => {
+  try {
+    await api.auth.requestPasswordReset(RESET_EMAIL);
+    showToast('Письмо отправлено ещё раз');
+    startResendCooldown('resend-reset', 'Отправить письмо ещё раз');
+  } catch (ex) { showToast(ex.message, true); }
 });
 
 document.getElementById('reset-password-form').addEventListener('submit', (e) => {
